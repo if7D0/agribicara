@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Tema XML sengaja minimal: seluruh tampilan digambar oleh Compose
+      (AgriBicaraTheme). Parent dari framework agar tidak perlu menambah
+      dependency com.google.android.material hanya untuk sebuah shell theme.
+      Splash screen final dikerjakan di Fase 8.
+    -->
+    <style name="Theme.AgriBicara" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
