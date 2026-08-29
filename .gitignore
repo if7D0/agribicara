@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration (SDK path, API keys) — NEVER commit
+local.properties
+
+# Signing material — NEVER commit
+*.jks
+*.keystore
+keystore.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.cxx/
+captures/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
