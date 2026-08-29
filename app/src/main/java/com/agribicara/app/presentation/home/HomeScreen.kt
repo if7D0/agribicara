@@ -31,8 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.agribicara.app.R
 import com.agribicara.app.presentation.theme.Dimens
@@ -57,6 +57,12 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val voiceNotReadyMessage = stringResource(R.string.home_mic_not_ready)
+
+    // Sapaan bisa basi bila app lama di background; hitung ulang tiap resume.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshGreeting()
+        onPauseOrDispose { }
+    }
 
     Scaffold(
         modifier = modifier.testTag("home_screen"),
@@ -123,7 +129,7 @@ fun HomeScreen(
                     Icon(
                         imageVector = Icons.Filled.Mic,
                         contentDescription = stringResource(R.string.cd_mic_button),
-                        modifier = Modifier.size(56.dp),
+                        modifier = Modifier.size(Dimens.MicIconSize),
                     )
                 }
 

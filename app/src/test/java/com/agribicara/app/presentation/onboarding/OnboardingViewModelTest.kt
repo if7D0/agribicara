@@ -1,76 +1,77 @@
 package com.agribicara.app.presentation.onboarding
 
+import com.agribicara.app.MainDispatcherRule
 import com.agribicara.app.core.common.Constants
 import com.agribicara.app.data.local.dao.UserPreferenceDao
-import com.agribicara.app.data.local.entity.UserPreferenceEntity
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.slot
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelTest {
 
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     private val dao: UserPreferenceDao = mockk(relaxed = true)
-    private lateinit var viewModel: OnboardingViewModel
 
-    @Before
-    fun setUp() {
-        // viewModelScope memakai Dispatchers.Main -> harus diganti di unit test
-        Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = OnboardingViewModel(dao)
-    }
+    @Test
+    fun `completeOnboarding menandai selesai lewat operasi atomik`() = runTest {
+        val viewModel = OnboardingViewModel(dao)
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
+        viewModel.completeOnboarding()
+
+        coVerify(exactly = 1) { dao.markOnboardingCompleted(Constants.USER_PREFERENCE_ID) }
+        assertTrue(viewModel.uiState.value.isCompleted)
+        assertFalse(viewModel.uiState.value.isSaving)
+        assertNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
-    fun `completeOnboarding menyimpan flag lalu memanggil callback`() = runTest {
-        // Arrange
-        coEvery { dao.get(Constants.USER_PREFERENCE_ID) } returns null
-        val saved = slot<UserPreferenceEntity>()
-        var callbackCalled = false
+    fun `tap ganda hanya menulis sekali`() = runTest {
+        // Penulisan sengaja dibuat menggantung agar tap kedua tiba saat isSaving true.
+        coEvery { dao.markOnboardingCompleted(any()) } coAnswers { delay(50) }
+        val viewModel = OnboardingViewModel(dao)
 
-        // Act
-        viewModel.completeOnboarding { callbackCalled = true }
+        viewModel.completeOnboarding()
+        viewModel.completeOnboarding()
+        advanceUntilIdleCompat()
 
-        // Assert
-        coVerify(exactly = 1) { dao.upsert(capture(saved)) }
-        assertTrue(saved.captured.isOnboardingCompleted)
-        assertEquals(Constants.USER_PREFERENCE_ID, saved.captured.id)
-        assertTrue(callbackCalled)
+        coVerify(exactly = 1) { dao.markOnboardingCompleted(any()) }
+        assertTrue(viewModel.uiState.value.isCompleted)
     }
 
     @Test
-    fun `completeOnboarding mempertahankan region yang sudah tersimpan`() = runTest {
-        // Arrange: pengguna sudah punya region (skenario Fase 2), jangan sampai hilang
-        coEvery { dao.get(Constants.USER_PREFERENCE_ID) } returns UserPreferenceEntity(
-            isOnboardingCompleted = false,
-            regionCode = "31.71.01.1001",
-            regionName = "Kelurahan Contoh",
-        )
-        val saved = slot<UserPreferenceEntity>()
+    fun `kegagalan penulisan memunculkan pesan error dan tidak menandai selesai`() = runTest {
+        coEvery { dao.markOnboardingCompleted(any()) } throws IllegalStateException("disk full")
+        val viewModel = OnboardingViewModel(dao)
 
-        // Act
-        viewModel.completeOnboarding { }
+        viewModel.completeOnboarding()
 
-        // Assert
-        coVerify(exactly = 1) { dao.upsert(capture(saved)) }
-        assertTrue(saved.captured.isOnboardingCompleted)
-        assertEquals("31.71.01.1001", saved.captured.regionCode)
-        assertEquals("Kelurahan Contoh", saved.captured.regionName)
+        assertFalse(viewModel.uiState.value.isCompleted)
+        assertFalse(viewModel.uiState.value.isSaving)
+        assertEquals("Gagal menyimpan. Coba lagi.", viewModel.uiState.value.errorMessage)
     }
+
+    @Test
+    fun `onErrorShown membersihkan pesan error`() = runTest {
+        coEvery { dao.markOnboardingCompleted(any()) } throws IllegalStateException("boom")
+        val viewModel = OnboardingViewModel(dao)
+        viewModel.completeOnboarding()
+
+        viewModel.onErrorShown()
+
+        assertNull(viewModel.uiState.value.errorMessage)
+    }
+
+    private suspend fun advanceUntilIdleCompat() = delay(200)
 }

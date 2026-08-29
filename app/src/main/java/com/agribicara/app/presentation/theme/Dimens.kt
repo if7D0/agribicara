@@ -17,6 +17,8 @@ object Dimens {
 
     /** Tombol mic di Home — elemen paling menonjol di layar. */
     val MicButtonSize = 120.dp
+    val MicIconSize = 56.dp
+    val OnboardingIconSize = 120.dp
 
     val ScreenPadding = 20.dp
     val SpaceExtraSmall = 4.dp

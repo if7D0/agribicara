@@ -81,4 +81,32 @@ class UserPreferenceDaoTest {
         val fetched = dao.get(Constants.USER_PREFERENCE_ID)
         assertTrue(fetched!!.isOnboardingCompleted)
     }
+
+    @Test
+    fun markOnboardingCompletedMenyisipkanBarisSaatBelumAda() = runTest {
+        dao.markOnboardingCompleted(Constants.USER_PREFERENCE_ID)
+
+        val fetched = dao.get(Constants.USER_PREFERENCE_ID)
+        assertTrue(fetched!!.isOnboardingCompleted)
+    }
+
+    @Test
+    fun markOnboardingCompletedTidakMenimpaRegionYangSudahAda() = runTest {
+        // Regresi: read-modify-write sebelumnya bisa mengembalikan region ke null
+        // bila penulis lain (region picker Fase 2) menulis di sela baca dan tulis.
+        dao.upsert(
+            UserPreferenceEntity(
+                isOnboardingCompleted = false,
+                regionCode = "32.01",
+                regionName = "Bogor",
+            ),
+        )
+
+        dao.markOnboardingCompleted(Constants.USER_PREFERENCE_ID)
+
+        val fetched = dao.get(Constants.USER_PREFERENCE_ID)
+        assertTrue(fetched!!.isOnboardingCompleted)
+        assertEquals("32.01", fetched.regionCode)
+        assertEquals("Bogor", fetched.regionName)
+    }
 }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * Menentukan layar awal.
@@ -32,11 +33,21 @@ class MainViewModel @Inject constructor(
     val startState: StateFlow<StartState> = _startState.asStateFlow()
 
     init {
+        resolveStartDestination()
+    }
+
+    private fun resolveStartDestination() {
         viewModelScope.launch {
-            val preference = userPreferenceDao.get(Constants.USER_PREFERENCE_ID)
-            val route = if (preference?.isOnboardingCompleted == true) {
-                Route.HOME
-            } else {
+            // Kegagalan baca database TIDAK boleh menggantung app di layar kosong.
+            // Room bisa gagal dibuka (DB korup, disk penuh, migrasi bermasalah di
+            // Fase 2/4/5). Dalam kasus itu, tampilkan onboarding: paling buruk
+            // pengguna melihatnya sekali lagi, jauh lebih baik daripada layar
+            // putih tanpa jalan keluar.
+            val route = try {
+                val preference = userPreferenceDao.get(Constants.USER_PREFERENCE_ID)
+                if (preference?.isOnboardingCompleted == true) Route.HOME else Route.ONBOARDING
+            } catch (e: Exception) {
+                Timber.e(e, "Gagal membaca preferensi; jatuh ke onboarding")
                 Route.ONBOARDING
             }
             _startState.value = StartState.Ready(route)

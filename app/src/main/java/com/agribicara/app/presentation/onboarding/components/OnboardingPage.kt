@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.agribicara.app.presentation.theme.Dimens
 
 /**
@@ -89,7 +88,7 @@ fun OnboardingPage(
             imageVector = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(120.dp),
+            modifier = Modifier.size(Dimens.OnboardingIconSize),
         )
         Spacer(modifier = Modifier.height(Dimens.SpaceExtraLarge))
         Text(

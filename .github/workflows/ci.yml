@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [master, main, "feat/**"]
   pull_request:
-    branches: [main]
+    branches: [master, main]
 
 jobs:
   build:
@@ -32,6 +32,11 @@ jobs:
 
       - name: Lint
         run: ./gradlew lintDebug --no-daemon
+
+      # Release dibangun di CI agar kerusakan R8/resource-shrinking tidak
+      # baru ketahuan saat rilis (debug tidak diminifikasi).
+      - name: Build release
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload test results
         if: always()

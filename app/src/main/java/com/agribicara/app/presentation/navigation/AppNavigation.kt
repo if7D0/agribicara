@@ -21,6 +21,7 @@ fun AppNavigation(
             OnboardingScreen(
                 onFinished = {
                     navController.navigate(Route.HOME) {
+                        launchSingleTop = true
                         // Hapus onboarding dari back stack supaya tombol back
                         // di Home keluar dari app, bukan kembali ke onboarding.
                         popUpTo(Route.ONBOARDING) { inclusive = true }
