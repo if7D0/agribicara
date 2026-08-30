@@ -123,4 +123,14 @@
     <string name="error_ai_timeout">Sambungan terlalu lambat, jawabannya belum sampai. Coba tanya lagi, atau lihat cuaca yang tersimpan.</string>
     <string name="error_ai_blocked">Maaf, pertanyaan itu belum bisa dijawab. Coba tanyakan dengan kalimat lain.</string>
     <string name="error_ai_empty_question">Pertanyaannya masih kosong.</string>
+
+    <!-- Fase 6: notifikasi cuaca ekstrem. Kalimatnya menyebut APA dan KAPAN,
+         karena petani perlu memutuskan tindakan, bukan sekadar diberi tahu. -->
+    <string name="weather_alert_channel_name">Peringatan cuaca ekstrem</string>
+    <string name="weather_alert_channel_description">Pemberitahuan saat hujan lebat atau badai diperkirakan datang di wilayah Anda.</string>
+    <string name="weather_alert_title_thunderstorm">Badai diperkirakan %1$s</string>
+    <string name="weather_alert_title_heavy_rain">Hujan lebat diperkirakan %1$s</string>
+    <string name="weather_alert_body">Di %1$s. Ketuk untuk melihat prakiraan selengkapnya.</string>
+    <string name="weather_alert_today">hari ini</string>
+    <string name="weather_alert_tomorrow">besok</string>
 </resources>

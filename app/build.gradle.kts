@@ -86,6 +86,13 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    // WorkManager (Fase 6): pemeriksaan cuaca ekstrem berkala.
+    // androidx.hilt:hilt-compiler DIBUTUHKAN di samping hilt-compiler Dagger di
+    // atas — yang ini yang menghasilkan kode untuk @HiltWorker.
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)
 
     implementation(libs.room.runtime)
@@ -119,6 +126,8 @@ dependencies {
     androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.work.testing)
+    androidTestImplementation(libs.mockk.android)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

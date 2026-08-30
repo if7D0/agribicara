@@ -1,5 +1,10 @@
 package com.agribicara.app.presentation.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,9 +30,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -35,6 +45,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,6 +90,8 @@ fun HomeScreen(
         onPauseOrDispose { }
     }
 
+    NotificationPermissionRequest(hasRegion = !uiState.needsRegion)
+
     HomeContent(
         uiState = uiState,
         onOpenWeather = onOpenWeather,
@@ -86,6 +99,43 @@ fun HomeScreen(
         onOpenVoice = onOpenVoice,
         modifier = modifier,
     )
+}
+
+/**
+ * Meminta izin notifikasi, sekali, dan hanya setelah wilayah dipilih.
+ *
+ * Bukan saat app pertama dibuka: pada saat itu aplikasi belum tahu wilayah
+ * mana pun sehingga belum ada yang bisa diperingatkan, dan permintaan izin
+ * yang datang tanpa konteks lebih mungkin ditolak. Setelah petani memilih
+ * desanya, peringatan cuaca punya arti yang jelas.
+ *
+ * Di bawah API 33 izin ini diberikan otomatis, jadi tidak ada yang diminta.
+ * Penolakan tidak diikuti apa pun — tidak ada dialog penjelasan, tidak ada
+ * permintaan ulang. Notifikasi adalah tambahan, dan memaksa tambahan hanya
+ * membuat petani belajar menutup dialog tanpa membaca.
+ */
+@Composable
+private fun NotificationPermissionRequest(hasRegion: Boolean) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+
+    val context = LocalContext.current
+    var sudahDiminta by rememberSaveable { mutableStateOf(false) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { /* Ditolak pun tidak ada yang berubah selain notifikasi. */ }
+
+    LaunchedEffect(hasRegion, sudahDiminta) {
+        if (!hasRegion || sudahDiminta) return@LaunchedEffect
+
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+
+        sudahDiminta = true
+        if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
 }
 
 /** Isi layar Home tanpa ketergantungan ke ViewModel. Diuji langsung. */

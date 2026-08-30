@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!--
+      Notifikasi peringatan cuaca ekstrem (Fase 6). Izin runtime sejak API 33;
+      di bawah itu otomatis diberikan.
+
+      Ditolak = TIDAK ada fungsi lain yang berkurang. Aplikasi ini tetap bisa
+      dipakai penuh tanpa notifikasi, sama seperti perangkat tanpa mikrofon
+      tetap boleh memasangnya.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!--
       WAJIB, bukan opsional. Sejak Android 11 (API 30) package visibility
@@ -51,6 +62,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          WAJIB, bukan opsional. AgriBicaraApp mengimplementasikan
+          Configuration.Provider supaya WorkManager memakai HiltWorkerFactory.
+          Provider bawaan androidx.startup menginisialisasi WorkManager LEBIH
+          DULU dengan pabrik bawaannya, sehingga konfigurasi Hilt tidak pernah
+          terpakai dan WeatherCheckWorker gagal dibuat saat runtime.
+
+          Gejalanya menyesatkan: build tetap sukses dan aplikasi tetap jalan.
+          Kegagalannya baru terlihat ketika worker benar-benar dijalankan.
+          Jangan dihapus.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove" />
     </application>
 
 </manifest>
