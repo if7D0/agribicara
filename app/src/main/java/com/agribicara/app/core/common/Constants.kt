@@ -76,4 +76,49 @@ object Constants {
 
     /** Jumlah alternatif hasil pengenalan; hanya yang teratas dipakai. */
     const val SPEECH_MAX_RESULTS = 1
+
+    // --- Fase 5: AI --------------------------------------------------------
+
+    /**
+     * Model Gemini yang dipakai lewat Firebase AI Logic.
+     *
+     * flash-lite dipilih karena jawaban dibatasi 3 kalimat — kapasitas model
+     * besar tidak terpakai, sedangkan latensi dan kuota terasa langsung bagi
+     * petani dengan sinyal lemah. Bila kualitas Bahasa Indonesia ternyata
+     * kurang, naikkan ke "gemini-3.7-flash": cukup mengubah baris ini.
+     *
+     * JANGAN memakai "gemini-2.0-flash" — sudah deprecated/shutdown, dan
+     * masih banyak muncul di contoh kode lama.
+     */
+    const val GEMINI_MODEL = "gemini-3.5-flash-lite"
+
+    /**
+     * Batas panjang jawaban. Petani mendengarkan, bukan membaca: paragraf
+     * panjang lewat TTS mustahil diingat.
+     */
+    const val AI_MAX_SENTENCES = 3
+
+    /** Berapa kali panggilan AI diulang setelah kegagalan sesaat. */
+    const val AI_RETRY_COUNT = 1
+
+    /**
+     * Umur maksimum jawaban tersimpan yang masih boleh dipakai ulang.
+     *
+     * Disamakan dengan [CACHE_STALE_HOURS] dengan sengaja: jawaban ini
+     * di-grounding data cuaca, jadi tidak masuk akal bertahan lebih lama
+     * daripada cuaca yang mendasarinya.
+     */
+    const val ANSWER_CACHE_HOURS = 6L
+
+    /** Batas baris riwayat yang diobservasi UI. */
+    const val CHAT_HISTORY_LIMIT = 50
+
+    /**
+     * Berapa hari prakiraan yang disisipkan ke prompt.
+     *
+     * Dibatasi 3 karena hanya hari 1-3 yang benar-benar dari BMKG; hari 4-7
+     * adalah estimasi Open-Meteo dan tidak layak dijadikan dasar saran
+     * bertindak.
+     */
+    const val PROMPT_FORECAST_DAYS = 3
 }

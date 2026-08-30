@@ -69,3 +69,34 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         )
     }
 }
+
+/**
+ * v2 -> v3: riwayat percakapan (Fase 5).
+ *
+ * Hanya menambah satu tabel baru. Tidak ada tabel lama yang disentuh, jadi
+ * cuaca tersimpan, wilayah tersimpan, dan preferensi pengguna semuanya
+ * selamat — penting karena cache cuaca adalah satu-satunya sumber data saat
+ * petani sedang offline.
+ *
+ * SQL di bawah disalin PERSIS dari app/schemas/.../3.json (`createSql`),
+ * bukan ditulis dari ingatan. MigrationTest membandingkan hasil migrasi ini
+ * dengan skema bangkitan Room; perbedaan sekecil apa pun, termasuk
+ * AUTOINCREMENT yang terlewat, akan menggagalkannya.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `chat_message` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`role` TEXT NOT NULL, " +
+                "`text` TEXT NOT NULL, " +
+                "`questionKey` TEXT NOT NULL, " +
+                "`regionCode` TEXT, " +
+                "`createdAt` INTEGER NOT NULL)",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_chat_message_questionKey` " +
+                "ON `chat_message` (`questionKey`)",
+        )
+    }
+}

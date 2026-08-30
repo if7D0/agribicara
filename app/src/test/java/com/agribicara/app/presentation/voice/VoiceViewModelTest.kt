@@ -3,6 +3,10 @@ package com.agribicara.app.presentation.voice
 import com.agribicara.app.MainDispatcherRule
 import com.agribicara.app.domain.model.SpeechEvent
 import com.agribicara.app.domain.model.TtsStatus
+import com.agribicara.app.core.common.NetworkResult
+import com.agribicara.app.domain.model.AiAnswer
+import com.agribicara.app.domain.model.AnswerSource
+import com.agribicara.app.domain.usecase.AskAgriUseCase
 import com.agribicara.app.domain.usecase.IsSpeechRecognitionAvailableUseCase
 import com.agribicara.app.domain.usecase.ListenForSpeechUseCase
 import com.agribicara.app.domain.usecase.PrepareTextToSpeechUseCase
@@ -36,21 +40,25 @@ class VoiceViewModelTest {
     private val prepareTextToSpeech = mockk<PrepareTextToSpeechUseCase>()
     private val stopSpeaking = mockk<StopSpeakingUseCase>(relaxed = true)
     private val isAvailable = mockk<IsSpeechRecognitionAvailableUseCase>()
+    private val askAgri = mockk<AskAgriUseCase>()
 
     private fun viewModel(
         speechAvailable: Boolean = true,
         ttsStatus: TtsStatus = TtsStatus.READY,
         events: Flow<SpeechEvent> = flowOf(),
+        answer: NetworkResult<AiAnswer> = NetworkResult.Success(AiAnswer(ANSWER, AnswerSource.AI)),
     ): VoiceViewModel {
         every { isAvailable() } returns speechAvailable
         coEvery { prepareTextToSpeech() } returns ttsStatus
         every { listenForSpeech(any()) } returns events
+        coEvery { askAgri(any()) } returns answer
         return VoiceViewModel(
             listenForSpeech = listenForSpeech,
             speakText = speakText,
             prepareTextToSpeech = prepareTextToSpeech,
             stopSpeaking = stopSpeaking,
             isSpeechRecognitionAvailable = isAvailable,
+            askAgri = askAgri,
         )
     }
 
@@ -98,7 +106,7 @@ class VoiceViewModelTest {
         }
 
     @Test
-    fun `hasil akhir dibacakan kembali sebagai bukti loop suara`() =
+    fun `hasil akhir memicu jawaban yang dibacakan`() =
         runTest(mainDispatcherRule.testDispatcher.scheduler) {
             val vm = viewModel(events = flowOf(SpeechEvent.FinalResult("halo")))
             advanceUntilIdle()
@@ -106,7 +114,9 @@ class VoiceViewModelTest {
             vm.startListening()
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { speakText("halo") }
+            // Fase 3 membacakan ulang "halo"; sejak Fase 5 yang dibacakan
+            // adalah JAWABAN atas "halo".
+            coVerify(exactly = 1) { speakText(ANSWER) }
         }
 
     @Test
@@ -170,7 +180,7 @@ class VoiceViewModelTest {
 
             assertEquals("kapan musim tanam", vm.uiState.value.transcript)
             assertEquals(VoicePhase.RESULT, vm.uiState.value.phase)
-            coVerify { speakText("kapan musim tanam") }
+            coVerify { askAgri("kapan musim tanam") }
         }
 
     @Test
@@ -231,6 +241,7 @@ class VoiceViewModelTest {
                 prepareTextToSpeech = prepareTextToSpeech,
                 stopSpeaking = stopSpeaking,
                 isSpeechRecognitionAvailable = isAvailable,
+                askAgri = askAgri,
             )
             advanceUntilIdle()
 
@@ -266,7 +277,7 @@ class VoiceViewModelTest {
         }
 
     @Test
-    fun `replay membacakan ulang hasil terakhir`() =
+    fun `replay membacakan ulang jawaban terakhir`() =
         runTest(mainDispatcherRule.testDispatcher.scheduler) {
             val vm = viewModel(events = flowOf(SpeechEvent.FinalResult("cuaca besok")))
             advanceUntilIdle()
@@ -276,11 +287,11 @@ class VoiceViewModelTest {
             vm.replay()
             advanceUntilIdle()
 
-            coVerify(exactly = 2) { speakText("cuaca besok") }
+            coVerify(exactly = 2) { speakText(ANSWER) }
         }
 
     @Test
-    fun `replay tanpa transkrip tidak melakukan apa pun`() =
+    fun `replay tanpa jawaban sama sekali tidak melakukan apa pun`() =
         runTest(mainDispatcherRule.testDispatcher.scheduler) {
             val vm = viewModel()
             advanceUntilIdle()
@@ -319,4 +330,183 @@ class VoiceViewModelTest {
             assertEquals(VoicePhase.IDLE, vm.uiState.value.phase)
             assertEquals(0f, vm.uiState.value.soundLevel, 0.001f)
         }
+
+    // --- Fase 5: jawaban AI ------------------------------------------------
+
+    @Test
+    fun `hasil suara final memicu pertanyaan ke AI dan menampilkan jawabannya`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel(events = flowOf(SpeechEvent.FinalResult(QUESTION)))
+            advanceUntilIdle()
+
+            vm.startListening()
+            advanceUntilIdle()
+
+            assertEquals(VoicePhase.RESULT, vm.uiState.value.phase)
+            assertEquals(QUESTION, vm.uiState.value.transcript)
+            assertEquals(ANSWER, vm.uiState.value.answer)
+            coVerify { askAgri(QUESTION) }
+        }
+
+    @Test
+    fun `jawaban yang dibacakan adalah jawaban AI bukan pertanyaannya`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel(events = flowOf(SpeechEvent.FinalResult(QUESTION)))
+            advanceUntilIdle()
+
+            vm.startListening()
+            advanceUntilIdle()
+
+            coVerify { speakText(ANSWER) }
+            coVerify(exactly = 0) { speakText(QUESTION) }
+        }
+
+    @Test
+    fun `jalur teks juga melewati AI`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel()
+            advanceUntilIdle()
+
+            vm.submitTypedText("  $QUESTION  ")
+            advanceUntilIdle()
+
+            coVerify { askAgri(QUESTION) }
+            assertEquals(ANSWER, vm.uiState.value.answer)
+        }
+
+    @Test
+    fun `AI gagal TIDAK menghapus pertanyaan petani`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel(answer = NetworkResult.Error("tidak ada internet"))
+            advanceUntilIdle()
+
+            vm.submitTypedText(QUESTION)
+            advanceUntilIdle()
+
+            // Pertanyaannya tetap terlihat; petani tidak dipaksa mengulang
+            // karena kegagalan yang bukan salahnya.
+            assertEquals(QUESTION, vm.uiState.value.transcript)
+            // answerError, bukan errorMessage: pesan ini harus bertahan di
+            // layar bersama tawaran melihat cuaca, bukan hilang sebagai snackbar.
+            assertEquals("tidak ada internet", vm.uiState.value.answerError)
+            assertNull(vm.uiState.value.errorMessage)
+            assertEquals(VoicePhase.RESULT, vm.uiState.value.phase)
+            assertTrue(vm.uiState.value.answer.isEmpty())
+        }
+
+    @Test
+    fun `jawaban dari cache ditandai`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel(
+                answer = NetworkResult.Success(AiAnswer(ANSWER, AnswerSource.CACHE)),
+            )
+            advanceUntilIdle()
+
+            vm.submitTypedText(QUESTION)
+            advanceUntilIdle()
+
+            assertTrue(vm.uiState.value.isAnswerFromCache)
+        }
+
+    @Test
+    fun `jawaban baru tidak ditandai cache`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel()
+            advanceUntilIdle()
+
+            vm.submitTypedText(QUESTION)
+            advanceUntilIdle()
+
+            assertFalse(vm.uiState.value.isAnswerFromCache)
+        }
+
+    @Test
+    fun `replay membacakan jawaban bukan pertanyaan`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel()
+            advanceUntilIdle()
+            vm.submitTypedText(QUESTION)
+            advanceUntilIdle()
+
+            vm.replay()
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) { speakText(ANSWER) }
+            coVerify(exactly = 0) { speakText(QUESTION) }
+        }
+
+    @Test
+    fun `replay tanpa jawaban tidak melakukan apa pun`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel(answer = NetworkResult.Error("gagal"))
+            advanceUntilIdle()
+            vm.submitTypedText(QUESTION)
+            advanceUntilIdle()
+
+            vm.replay()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { speakText(any()) }
+        }
+
+    @Test
+    fun `canReplay false selama belum ada jawaban`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel()
+            advanceUntilIdle()
+
+            assertFalse(vm.uiState.value.canReplay)
+        }
+
+    @Test
+    fun `sesi suara baru membersihkan jawaban lama`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel()
+            advanceUntilIdle()
+            vm.submitTypedText(QUESTION)
+            advanceUntilIdle()
+            assertEquals(ANSWER, vm.uiState.value.answer)
+
+            vm.startListening()
+
+            // Jawaban lama harus hilang begitu pertanyaan baru dimulai, kalau
+            // tidak petani membaca jawaban pertanyaan sebelumnya.
+            assertTrue(vm.uiState.value.answer.isEmpty())
+            assertFalse(vm.uiState.value.isAnswerFromCache)
+        }
+
+    @Test
+    fun `pertanyaan kosong tidak memanggil AI`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel()
+            advanceUntilIdle()
+
+            vm.submitTypedText("   ")
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { askAgri(any()) }
+        }
+
+    @Test
+    fun `pertanyaan baru membersihkan kegagalan jawaban sebelumnya`() =
+        runTest(mainDispatcherRule.testDispatcher.scheduler) {
+            val vm = viewModel(answer = NetworkResult.Error("tidak ada internet"))
+            advanceUntilIdle()
+            vm.submitTypedText(QUESTION)
+            advanceUntilIdle()
+            assertEquals("tidak ada internet", vm.uiState.value.answerError)
+
+            coEvery { askAgri(any()) } returns
+                NetworkResult.Success(AiAnswer(ANSWER, AnswerSource.AI))
+            vm.submitTypedText("pertanyaan lain")
+            advanceUntilIdle()
+
+            assertNull(vm.uiState.value.answerError)
+            assertEquals(ANSWER, vm.uiState.value.answer)
+        }
+
+    private companion object {
+        const val QUESTION = "kapan waktu terbaik memupuk padi"
+        const val ANSWER = "Pupuk sebaiknya Sabtu pagi."
+    }
 }

@@ -21,6 +21,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -65,6 +67,7 @@ import com.agribicara.app.presentation.voice.components.MicIndicator
  */
 @Composable
 fun VoiceScreen(
+    onOpenWeather: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: VoiceViewModel = hiltViewModel(),
 ) {
@@ -110,7 +113,7 @@ fun VoiceScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            TranscriptArea(uiState = uiState)
+            TranscriptArea(uiState = uiState, onOpenWeather = onOpenWeather)
 
             Spacer(modifier = Modifier.height(Dimens.SpaceLarge))
 
@@ -149,12 +152,20 @@ fun VoiceScreen(
     }
 }
 
+/**
+ * Area pertanyaan + jawaban.
+ *
+ * Pertanyaan tetap terlihat bersama jawabannya, dan tetap terlihat ketika
+ * jawabannya gagal didapat. Petani sudah bersusah payah mengucapkannya;
+ * menghapusnya karena jaringan putus memaksa ia mengulang tanpa sebab.
+ */
 @Composable
-private fun TranscriptArea(uiState: VoiceUiState) {
+private fun TranscriptArea(uiState: VoiceUiState, onOpenWeather: () -> Unit) {
     val promptRes = when (uiState.phase) {
         VoicePhase.PREPARING -> R.string.voice_prompt_preparing
         VoicePhase.LISTENING -> R.string.voice_prompt_listening
         VoicePhase.PROCESSING -> R.string.voice_prompt_processing
+        VoicePhase.THINKING -> R.string.ai_thinking
         else -> R.string.voice_prompt_idle
     }
 
@@ -172,19 +183,91 @@ private fun TranscriptArea(uiState: VoiceUiState) {
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
             )
-        } else {
+            return@Column
+        }
+
+        Text(
+            text = stringResource(R.string.ai_question_label),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = uiState.transcript,
+            // Pertanyaan mengecil setelah ada jawaban: jawabannya yang dicari
+            // petani, pertanyaan hanya konteks.
+            style = if (uiState.answer.isBlank()) {
+                MaterialTheme.typography.headlineSmall
+            } else {
+                MaterialTheme.typography.titleMedium
+            },
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.testTag("voice_transcript"),
+        )
+
+        if (uiState.isThinking) {
+            Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
+            CircularProgressIndicator(modifier = Modifier.testTag("voice_thinking"))
+            Spacer(modifier = Modifier.height(Dimens.SpaceSmall))
             Text(
-                text = uiState.transcript,
-                // Teks hasil sengaja besar: ini satu-satunya informasi yang
-                // dicari petani di layar ini.
+                text = stringResource(R.string.ai_thinking),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        if (uiState.answer.isNotBlank()) {
+            Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
+            Text(
+                text = uiState.answer,
+                // Jawaban adalah informasi utama layar ini, jadi ia yang
+                // mendapat ukuran terbesar.
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.testTag("voice_transcript"),
+                modifier = Modifier.testTag("voice_answer"),
             )
+
+            if (uiState.isAnswerFromCache) {
+                Spacer(modifier = Modifier.height(Dimens.SpaceSmall))
+                Text(
+                    text = stringResource(R.string.ai_answer_from_cache),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.testTag("voice_answer_cached"),
+                )
+            }
         }
     }
+
+        if (uiState.answerError != null) {
+            Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
+            Text(
+                text = uiState.answerError,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag("voice_answer_error"),
+            )
+            Spacer(modifier = Modifier.height(Dimens.SpaceSmall))
+            // Cuaca tersimpan tetap berguna tanpa internet, jadi layar ini
+            // tidak pernah menjadi jalan buntu meski jawaban gagal didapat.
+            TextButton(
+                onClick = onOpenWeather,
+                modifier = Modifier.testTag("voice_open_weather"),
+            ) {
+                Text(stringResource(R.string.ai_open_weather))
+            }
+        }
 }
 
 @Composable
@@ -211,7 +294,10 @@ private fun VoiceControls(
 
         Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
 
-        if (uiState.phase == VoicePhase.RESULT && uiState.canSpeak) {
+        // canReplay sudah mensyaratkan ADA jawaban: sebelumnya tombol muncul
+        // di fase RESULT walau jawabannya gagal didapat, lalu tidak melakukan
+        // apa-apa saat ditekan.
+        if (uiState.canReplay) {
             TextButton(onClick = onReplay, modifier = Modifier.testTag("voice_replay")) {
                 Text(stringResource(R.string.voice_replay))
             }

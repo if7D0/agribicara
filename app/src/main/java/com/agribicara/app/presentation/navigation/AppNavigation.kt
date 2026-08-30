@@ -82,7 +82,11 @@ fun AppNavigation(
         // atas HOME, jadi tidak perlu penanganan back stack khusus seperti pada
         // region picker.
         composable(Route.VOICE) {
-            VoiceScreen()
+            VoiceScreen(
+                onOpenWeather = {
+                    navController.navigate(Route.WEATHER) { launchSingleTop = true }
+                },
+            )
         }
     }
 }

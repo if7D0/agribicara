@@ -105,4 +105,19 @@
     <string name="cd_mic_button">Tombol bicara</string>
     <!-- Bahasa Indonesia tidak mengenal infleksi jamak, jadi <plurals> tidak diperlukan. -->
     <string name="cd_onboarding_progress" tools:ignore="PluralsCandidate">Langkah %1$d dari %2$d</string>
+
+    <!-- Fase 5: jawaban AI -->
+    <string name="ai_thinking">Sedang mencari jawaban…</string>
+    <string name="ai_question_label">Pertanyaan Anda</string>
+    <string name="ai_answer_label">Jawaban</string>
+    <string name="ai_answer_from_cache">Jawaban tersimpan dari pertanyaan sebelumnya.</string>
+    <string name="ai_ask_again">Tanya lagi</string>
+    <string name="ai_open_weather">Lihat cuaca saja</string>
+
+    <!-- Kegagalan AI. Tiap pesan menyebut tindakan yang berbeda, karena
+         "tidak ada internet" dan "jawaban ditolak" menuntut respons berbeda. -->
+    <string name="error_ai_offline">Tidak ada koneksi internet, jadi pertanyaan belum bisa dijawab. Data cuaca yang tersimpan tetap bisa dilihat.</string>
+    <string name="error_ai_unavailable">Layanan jawaban sedang tidak bisa dihubungi. Coba lagi sebentar lagi.</string>
+    <string name="error_ai_blocked">Maaf, pertanyaan itu belum bisa dijawab. Coba tanyakan dengan kalimat lain.</string>
+    <string name="error_ai_empty_question">Pertanyaannya masih kosong.</string>
 </resources>
