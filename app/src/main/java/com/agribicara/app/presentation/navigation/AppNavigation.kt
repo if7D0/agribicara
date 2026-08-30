@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import com.agribicara.app.presentation.home.HomeScreen
 import com.agribicara.app.presentation.onboarding.OnboardingScreen
 import com.agribicara.app.presentation.region.RegionPickerScreen
+import com.agribicara.app.presentation.voice.VoiceScreen
 import com.agribicara.app.presentation.weather.WeatherScreen
 
 @Composable
@@ -63,6 +64,9 @@ fun AppNavigation(
                 onChooseRegion = {
                     navController.navigate(Route.REGION_PICKER) { launchSingleTop = true }
                 },
+                onOpenVoice = {
+                    navController.navigate(Route.VOICE) { launchSingleTop = true }
+                },
             )
         }
 
@@ -72,6 +76,13 @@ fun AppNavigation(
                     navController.navigate(Route.REGION_PICKER) { launchSingleTop = true }
                 },
             )
+        }
+
+        // Back dari sini kembali ke Home secara alami: VOICE selalu didorong di
+        // atas HOME, jadi tidak perlu penanganan back stack khusus seperti pada
+        // region picker.
+        composable(Route.VOICE) {
+            VoiceScreen()
         }
     }
 }

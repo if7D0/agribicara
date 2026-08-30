@@ -23,13 +23,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -43,7 +39,6 @@ import com.agribicara.app.R
 import com.agribicara.app.core.util.WeatherCodeMapper
 import com.agribicara.app.domain.model.DailyForecast
 import com.agribicara.app.presentation.theme.Dimens
-import kotlinx.coroutines.launch
 
 /**
  * Kerangka layar Home.
@@ -51,21 +46,20 @@ import kotlinx.coroutines.launch
  * Tombol mikrofon adalah elemen paling menonjol di layar (prinsip "satu aksi
  * utama per layar" dari PRD) - sengaja BUKAN FAB kecil di pojok.
  *
- * Pada fase ini tombol hanya placeholder visual: menekannya memunculkan
- * snackbar, bukan memanggil STT. Alur suara sungguhan dibangun di Fase 3.
+ * Sejak Fase 3 tombol ini membuka layar suara sungguhan. Izin mikrofon TIDAK
+ * diminta di sini melainkan di layar suara, tepat saat dibutuhkan - Home harus
+ * tetap bisa dipakai oleh petani yang belum mau memberi izin.
  * Kartu cuaca sudah terisi data nyata sejak Fase 2.
  */
 @Composable
 fun HomeScreen(
     onOpenWeather: () -> Unit,
     onChooseRegion: () -> Unit,
+    onOpenVoice: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-    val voiceNotReadyMessage = stringResource(R.string.home_mic_not_ready)
 
     // Sapaan bisa basi bila app lama di background; hitung ulang tiap resume.
     // Cuaca ikut dimuat ulang di sini supaya kembali dari region picker
@@ -78,7 +72,6 @@ fun HomeScreen(
 
     Scaffold(
         modifier = modifier.testTag("home_screen"),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -108,10 +101,7 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 FilledIconButton(
-                    onClick = {
-                        // Feedback langsung: setiap sentuhan harus ada responsnya.
-                        scope.launch { snackbarHostState.showSnackbar(voiceNotReadyMessage) }
-                    },
+                    onClick = onOpenVoice,
                     shape = CircleShape,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary,

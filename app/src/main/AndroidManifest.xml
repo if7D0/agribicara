@@ -3,6 +3,33 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!--
+      WAJIB, bukan opsional. Sejak Android 11 (API 30) package visibility
+      menyembunyikan layanan milik aplikasi lain, dan project ini targetSdk 37.
+      Tanpa dua blok di bawah, SpeechRecognizer.isRecognitionAvailable()
+      mengembalikan false dan TextToSpeech gagal menemukan engine - BAHKAN di
+      HP yang Google services-nya lengkap. Sumber: javadoc resmi
+      SpeechRecognizer.createSpeechRecognizer dan TextToSpeech.
+
+      Gejalanya menyesatkan: aplikasi tampak berjalan normal tapi selalu jatuh
+      ke jalur teks. Jangan dihapus.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
+    <!-- Mikrofon tidak diwajibkan: perangkat tanpa mic tetap boleh memasang
+         aplikasi dan memakai jalur input teks. -->
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
 
     <application
         android:name=".AgriBicaraApp"

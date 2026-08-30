@@ -21,7 +21,6 @@
     <string name="home_greeting_evening">Selamat sore</string>
     <string name="home_greeting_night">Selamat malam</string>
     <string name="home_mic_label">Tekan &amp; Bicara</string>
-    <string name="home_mic_not_ready">Fitur suara akan aktif segera</string>
 
     <!-- Cuaca: label kode WMO (dipakai untuk Open-Meteo; BMKG mengirim
          deskripsinya sendiri yang lebih diutamakan) -->
@@ -55,6 +54,47 @@
     <string name="region_search_hint">Cari…</string>
     <string name="region_empty">Tidak ada wilayah yang cocok</string>
     <string name="region_retry">Coba lagi</string>
+
+    <!-- Layar suara -->
+    <string name="voice_prompt_idle">Tekan tombol lalu bicara</string>
+    <string name="voice_prompt_preparing">Menyiapkan…</string>
+    <string name="voice_prompt_listening">Silakan bicara…</string>
+    <string name="voice_prompt_processing">Sedang memproses…</string>
+    <string name="voice_replay">Dengarkan lagi</string>
+
+    <!-- Jalur teks: dipakai saat pengenalan suara tidak tersedia, izin ditolak,
+         atau petani memang lebih nyaman mengetik (mitigasi risiko PRD) -->
+    <string name="voice_text_mode_title">Ketik pertanyaan Anda</string>
+    <string name="voice_text_hint">Tulis pertanyaan di sini</string>
+    <string name="voice_text_send">Kirim</string>
+    <string name="voice_switch_to_text">Ketik saja</string>
+    <string name="voice_switch_to_voice">Pakai suara</string>
+
+    <!-- Izin mikrofon -->
+    <string name="voice_permission_denied">Izin mikrofon belum diberikan. Anda tetap bisa mengetik pertanyaan.</string>
+    <string name="voice_permission_open_settings">Buka Pengaturan</string>
+
+    <!-- Status TTS -->
+    <string name="voice_tts_unavailable">Perangkat ini belum bisa membacakan jawaban. Teksnya tetap bisa dibaca.</string>
+    <string name="voice_tts_missing_data">Suara Bahasa Indonesia belum terpasang di perangkat ini. Teksnya tetap bisa dibaca.</string>
+
+    <!-- Pesan error pengenalan suara (Bahasa Indonesia sederhana) -->
+    <string name="voice_error_network">Tidak ada koneksi internet. Sambungkan dulu, lalu coba lagi.</string>
+    <string name="voice_error_network_timeout">Jaringan terlalu lambat. Coba lagi.</string>
+    <string name="voice_error_audio">Mikrofon bermasalah. Coba lagi.</string>
+    <string name="voice_error_server">Layanan suara sedang bermasalah. Coba lagi nanti.</string>
+    <string name="voice_error_no_speech">Tidak ada suara yang terdengar. Coba bicara lagi.</string>
+    <string name="voice_error_no_match">Ucapan belum dikenali. Coba ulangi lebih jelas.</string>
+    <string name="voice_error_busy">Suara sebelumnya masih diproses. Tunggu sebentar.</string>
+    <string name="voice_error_permission">Izin mikrofon belum diberikan.</string>
+    <string name="voice_error_too_many_requests">Terlalu banyak permintaan. Tunggu sebentar.</string>
+    <string name="voice_error_language">Bahasa Indonesia belum tersedia untuk pengenalan suara di perangkat ini.</string>
+    <string name="voice_error_unavailable">Perangkat ini belum mendukung pengenalan suara. Silakan ketik pertanyaan Anda.</string>
+    <string name="voice_error_client">Fitur suara sedang bermasalah. Silakan ketik pertanyaan Anda.</string>
+    <string name="voice_error_generic">Suara gagal dikenali. Coba lagi.</string>
+
+    <!-- Content description layar suara -->
+    <string name="cd_voice_listening">Sedang mendengarkan</string>
 
     <!-- Pesan error (Bahasa Indonesia sederhana, tampil langsung ke petani) -->
     <string name="error_weather_unavailable">Data cuaca belum bisa dimuat. Coba lagi nanti.</string>
