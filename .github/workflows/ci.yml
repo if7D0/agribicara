@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main, "feat/**"]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # AGP 9.x mewajibkan JDK 17 minimum
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Lint
+        run: ./gradlew lintDebug --no-daemon
+
+      # Release dibangun di CI agar kerusakan R8/resource-shrinking tidak
+      # baru ketahuan saat rilis (debug tidak diminifikasi).
+      - name: Build release
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: app/build/reports/
+
+# connectedDebugAndroidTest sengaja TIDAK dijalankan di CI: butuh emulator,
+# yang memakan menit build gratis secara signifikan. Jalankan secara lokal
+# sebelum merge (lihat README).

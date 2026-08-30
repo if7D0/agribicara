@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">AgriBicara</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_next">Lanjut</string>
+    <string name="onboarding_start">Mulai</string>
+
+    <string name="onboarding_title_1">Selamat datang di AgriBicara</string>
+    <string name="onboarding_body_1">Tanya soal cuaca dan pertanian cukup dengan berbicara.</string>
+
+    <string name="onboarding_title_2">Kami perlu tahu lokasi Anda</string>
+    <string name="onboarding_body_2">Supaya prakiraan cuaca sesuai desa Anda, bukan data kota.</string>
+
+    <string name="onboarding_title_3">Kami perlu izin mikrofon</string>
+    <string name="onboarding_body_3">Supaya Anda bisa bertanya cukup dengan suara.</string>
+
+    <!-- Home -->
+    <string name="home_greeting_morning">Selamat pagi</string>
+    <string name="home_greeting_afternoon">Selamat siang</string>
+    <string name="home_greeting_evening">Selamat sore</string>
+    <string name="home_greeting_night">Selamat malam</string>
+    <string name="home_weather_placeholder">Data cuaca akan tampil di sini</string>
+    <string name="home_mic_label">Tekan &amp; Bicara</string>
+    <string name="home_mic_not_ready">Fitur suara akan aktif segera</string>
+
+    <!-- Content descriptions (aksesibilitas) -->
+    <string name="cd_mic_button">Tombol bicara</string>
+    <!-- Bahasa Indonesia tidak mengenal infleksi jamak, jadi <plurals> tidak diperlukan. -->
+    <string name="cd_onboarding_progress" tools:ignore="PluralsCandidate">Langkah %1$d dari %2$d</string>
+</resources>
