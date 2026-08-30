@@ -30,3 +30,8 @@ Thumbs.db
 # ini tidak menambah keamanan apa pun. Yang menjaga akses adalah App Check,
 # bukan kerahasiaan berkas ini. Di-commit supaya CI bisa build.
 # Tinjau ulang bila repo ini suatu saat dibuat publik.
+
+# Artefak OCR/tangkapan layar sementara di akar proyek.
+*.png
+!app/src/**/*.png
+e85af62ea6cf4b0ba356485c0c7d4736.json
