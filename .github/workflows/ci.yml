@@ -14,12 +14,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          # AGP 9.x mewajibkan JDK 17 minimum
-          java-version: "17"
+          # AGP 9.x mewajibkan JDK 17 minimum, tapi gradle-daemon-jvm.properties
+          # memin daemon ke JDK 21. Disamakan agar CI tidak perlu mengunduh
+          # toolchain sendiri saat runtime.
+          java-version: "21"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
