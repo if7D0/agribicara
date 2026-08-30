@@ -18,4 +18,5 @@ object Route {
     const val HOME = "home"
     const val WEATHER = "weather"
     const val REGION_PICKER = "region_picker"
+    const val VOICE = "voice"
 }

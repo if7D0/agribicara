@@ -52,4 +52,28 @@ object Constants {
     /** Daily field yang diminta ke Open-Meteo. */
     const val OPEN_METEO_DAILY_FIELDS =
         "temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,weathercode"
+
+    // --- Fase 3: suara -----------------------------------------------------
+
+    /**
+     * Bahasa untuk STT dan TTS.
+     *
+     * Satu tag BCP-47 untuk dua-duanya: RecognizerIntent.EXTRA_LANGUAGE
+     * menerimanya apa adanya, dan TextToSpeech memakai
+     * Locale.forLanguageTag(tag yang sama). Satu sumber kebenaran, sehingga
+     * STT dan TTS tidak mungkin berbeda bahasa.
+     */
+    const val SPEECH_LANGUAGE_TAG = "id-ID"
+
+    /**
+     * Batas tunggu inisialisasi TextToSpeech.
+     *
+     * TextToSpeech.onInit bersifat asinkron dan pada sebagian perangkat TIDAK
+     * PERNAH dipanggil bila engine-nya bermasalah. Tanpa batas ini layar suara
+     * menggantung selamanya di keadaan "menyiapkan".
+     */
+    const val TTS_INIT_TIMEOUT_MS = 5_000L
+
+    /** Jumlah alternatif hasil pengenalan; hanya yang teratas dipakai. */
+    const val SPEECH_MAX_RESULTS = 1
 }
