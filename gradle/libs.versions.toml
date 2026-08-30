@@ -36,6 +36,11 @@ kotlinxSerialization = "1.9.0"
 coil = "2.7.0"
 timber = "5.0.1"
 desugar = "2.1.5"
+# Firebase AI Logic (Fase 5). BoM menentukan versi firebase-ai dan
+# firebase-appcheck-debug — jangan tulis versi pada keduanya di [libraries].
+firebaseBom = "34.18.0"
+# Plugin google-services punya jalur rilis sendiri, TIDAK diatur BoM Firebase.
+googleServices = "4.4.4"
 junit = "4.13.2"
 mockk = "1.14.11"
 androidxTestRunner = "1.7.0"
@@ -76,6 +81,13 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
+
+# Firebase AI Logic — kunci Gemini tetap di server Firebase, tidak pernah di APK.
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-ai = { group = "com.google.firebase", name = "firebase-ai" }
+# App Check ditegakkan otomatis untuk AI Logic sejak Juli 2026; debug provider
+# dipakai HANYA di build debug (lihat AgriBicaraApp).
+firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
@@ -88,3 +100,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -67,6 +68,7 @@ ksp {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
+    implementation(platform(libs.firebase.bom))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
@@ -89,6 +91,13 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    // Firebase AI Logic (Fase 5). Versi datang dari BoM di atas — sengaja tanpa versi.
+    implementation(libs.firebase.ai)
+    // implementation, BUKAN debugImplementation: AgriBicaraApp merujuk kelas ini di
+    // balik penjagaan BuildConfig.DEBUG. Konstanta itu compile-time, jadi seluruh
+    // cabangnya lenyap saat build release dan kelasnya tidak pernah ikut ter-APK.
+    implementation(libs.firebase.appcheck.debug)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
