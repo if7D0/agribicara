@@ -25,7 +25,7 @@ class OnboardingViewModelTest {
     private val dao: UserPreferenceDao = mockk(relaxed = true)
 
     @Test
-    fun `completeOnboarding menandai selesai lewat operasi atomik`() = runTest {
+    fun `completeOnboarding menandai selesai lewat operasi atomik`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         val viewModel = OnboardingViewModel(dao)
 
         viewModel.completeOnboarding()
@@ -37,7 +37,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `tap ganda hanya menulis sekali`() = runTest {
+    fun `tap ganda hanya menulis sekali`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         // Penulisan sengaja dibuat menggantung agar tap kedua tiba saat isSaving true.
         coEvery { dao.markOnboardingCompleted(any()) } coAnswers { delay(50) }
         val viewModel = OnboardingViewModel(dao)
@@ -51,7 +51,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `kegagalan penulisan memunculkan pesan error dan tidak menandai selesai`() = runTest {
+    fun `kegagalan penulisan memunculkan pesan error dan tidak menandai selesai`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         coEvery { dao.markOnboardingCompleted(any()) } throws IllegalStateException("disk full")
         val viewModel = OnboardingViewModel(dao)
 
@@ -63,7 +63,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `onErrorShown membersihkan pesan error`() = runTest {
+    fun `onErrorShown membersihkan pesan error`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         coEvery { dao.markOnboardingCompleted(any()) } throws IllegalStateException("boom")
         val viewModel = OnboardingViewModel(dao)
         viewModel.completeOnboarding()
