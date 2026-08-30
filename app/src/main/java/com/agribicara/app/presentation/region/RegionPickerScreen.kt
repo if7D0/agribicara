@@ -123,7 +123,10 @@ fun RegionPickerScreen(
                             textAlign = TextAlign.Center,
                         )
                         if (uiState.query.isBlank()) {
-                            TextButton(onClick = viewModel::retry) {
+                            TextButton(
+                                onClick = viewModel::retry,
+                                modifier = Modifier.heightIn(min = Dimens.TouchTargetMin),
+                            ) {
                                 Text(stringResource(R.string.region_retry))
                             }
                         }

@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import com.agribicara.app.R
 import com.agribicara.app.core.util.WeatherCodeMapper
@@ -76,7 +77,14 @@ fun DailyForecastRow(day: DailyForecast, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Dimens.SpaceMedium),
+            .padding(vertical = Dimens.SpaceMedium)
+            // Satu hari = satu perhentian TalkBack. Tanpa penggabungan ini,
+            // tujuh hari prakiraan menjadi ~28 perhentian terpisah dan petani
+            // harus mengingat sendiri potongan mana milik hari mana.
+            // Teks anaknya sudah berurutan (hari, cuaca, hujan, suhu),
+            // sehingga tidak perlu contentDescription tersendiri — cukup
+            // digabung, dan apa yang didengar sama dengan apa yang terlihat.
+            .semantics(mergeDescendants = true) { },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
