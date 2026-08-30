@@ -5,6 +5,7 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.agribicara.app.data.local.migration.MIGRATION_1_2
+import com.agribicara.app.data.local.migration.MIGRATION_2_3
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -105,6 +106,77 @@ class MigrationTest {
         val db = helper.runMigrationsAndValidate(TEST_DB, 2, true, MIGRATION_1_2)
 
         db.query("SELECT COUNT(*) FROM user_preference").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun migrasi2Ke3MempertahankanCuacaTersimpan() {
+        // Cache cuaca adalah satu-satunya sumber data saat petani offline.
+        // Kehilangannya karena update adalah kerusakan yang nyata terasa.
+        helper.createDatabase(TEST_DB, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO user_preference " +
+                    "(id, isOnboardingCompleted, regionCode, regionName, latitude, longitude) " +
+                    "VALUES (1, 1, '32.77.01.1002', 'Cibeureum', -6.9, 107.5)",
+            )
+            db.execSQL(
+                "INSERT INTO weather_cache " +
+                    "(regionCode, date, temperatureMax, temperatureMin, precipitationMm, " +
+                    "windSpeed, weatherCode, description, source, fetchedAt) " +
+                    "VALUES ('32.77.01.1002', '2026-08-29', 30.0, 20.0, 0.0, 3.6, 1, " +
+                    "'Cerah', 'BMKG', 1700000000000)",
+            )
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 3, true, MIGRATION_2_3)
+
+        db.query("SELECT COUNT(*) FROM weather_cache").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+        db.query("SELECT regionName FROM user_preference WHERE id = 1").use { cursor ->
+            assertTrue("Preferensi hilang setelah migrasi", cursor.moveToFirst())
+            assertEquals("Cibeureum", cursor.getString(0))
+        }
+    }
+
+    @Test
+    fun migrasi2Ke3MembuatTabelRiwayatYangBisaDitulis() {
+        helper.createDatabase(TEST_DB, 2).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 3, true, MIGRATION_2_3)
+
+        db.execSQL(
+            "INSERT INTO chat_message (role, text, questionKey, regionCode, createdAt) " +
+                "VALUES ('USER', 'kapan memupuk padi', 'kapan memupuk padi', " +
+                "'32.77.01.1002', 1700000000000)",
+        )
+        db.execSQL(
+            "INSERT INTO chat_message (role, text, questionKey, regionCode, createdAt) " +
+                "VALUES ('ASSISTANT', 'Pupuk sebaiknya Sabtu pagi.', 'kapan memupuk padi', " +
+                "'32.77.01.1002', 1700000000001)",
+        )
+
+        db.query("SELECT COUNT(*) FROM chat_message").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(2, cursor.getInt(0))
+        }
+        // id auto-generate: dua baris pertanyaan yang sama harus tetap
+        // menjadi dua baris, bukan saling menimpa.
+        db.query("SELECT DISTINCT id FROM chat_message").use { cursor ->
+            assertEquals(2, cursor.count)
+        }
+    }
+
+    @Test
+    fun migrasi2Ke3AmanPadaDatabaseKosong() {
+        helper.createDatabase(TEST_DB, 2).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 3, true, MIGRATION_2_3)
+
+        db.query("SELECT COUNT(*) FROM chat_message").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }

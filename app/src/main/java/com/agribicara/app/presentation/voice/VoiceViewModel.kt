@@ -2,8 +2,11 @@ package com.agribicara.app.presentation.voice
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.agribicara.app.core.common.NetworkResult
+import com.agribicara.app.domain.model.AnswerSource
 import com.agribicara.app.domain.model.SpeechEvent
 import com.agribicara.app.domain.model.TtsStatus
+import com.agribicara.app.domain.usecase.AskAgriUseCase
 import com.agribicara.app.domain.usecase.IsSpeechRecognitionAvailableUseCase
 import com.agribicara.app.domain.usecase.ListenForSpeechUseCase
 import com.agribicara.app.domain.usecase.PrepareTextToSpeechUseCase
@@ -39,17 +42,40 @@ enum class VoicePhase {
     /** Ucapan selesai, hasil sedang difinalkan. */
     PROCESSING,
 
+    /**
+     * Pertanyaan sudah lengkap, jawaban sedang dicari (Fase 5).
+     *
+     * Fase tersendiri, bukan menumpang PROCESSING: menunggu Gemini bisa
+     * memakan beberapa detik, dan tanpa keadaan yang terlihat berbeda petani
+     * mengira aplikasi hang lalu menekan tombol berulang.
+     */
+    THINKING,
+
     /** Ada hasil akhir. */
     RESULT,
 }
 
 data class VoiceUiState(
     val phase: VoicePhase = VoicePhase.IDLE,
-    /** Teks berjalan: hasil sementara saat mendengarkan, hasil akhir setelahnya. */
+    /** Pertanyaan petani: hasil sementara saat mendengarkan, final setelahnya. */
     val transcript: String = "",
+    /** Jawaban AI. Kosong sampai ada jawaban. */
+    val answer: String = "",
+    /** True bila [answer] diambil dari simpanan, bukan hasil tanya barusan. */
+    val isAnswerFromCache: Boolean = false,
     /** 0f..1f untuk animasi pulsa mikrofon. */
     val soundLevel: Float = 0f,
     val errorMessage: String? = null,
+    /**
+     * Kegagalan mendapatkan JAWABAN, ditampilkan permanen di layar.
+     *
+     * Dipisah dari [errorMessage] yang tampil sebagai snackbar lalu hilang:
+     * kegagalan suara bersifat sesaat dan cukup diberitahukan, sedangkan
+     * kegagalan jawaban menuntut petani memutuskan sesuatu — mengulang, atau
+     * melihat data cuaca yang tetap berguna tanpa internet. Pesan yang
+     * menghilang sendiri tidak bisa menawarkan pilihan itu.
+     */
+    val answerError: String? = null,
     /** False bila mengulang pasti gagal lagi (izin belum ada, bahasa tak ada). */
     val isRetryable: Boolean = true,
     /**
@@ -64,17 +90,22 @@ data class VoiceUiState(
     /** TTS berfungsi penuh; tombol "Dengarkan lagi" hanya masuk akal bila ini true. */
     val canSpeak: Boolean get() = ttsStatus == TtsStatus.READY
 
+    /** Ada sesuatu untuk dibacakan ulang, dan perangkat mampu membacakannya. */
+    val canReplay: Boolean get() = canSpeak && answer.isNotBlank()
+
     val isListening: Boolean
         get() = phase == VoicePhase.PREPARING || phase == VoicePhase.LISTENING
+
+    val isThinking: Boolean get() = phase == VoicePhase.THINKING
 }
 
 /**
- * Layar suara Fase 3.
+ * Layar suara.
  *
- * Fase 3 membuktikan LOOP-nya: apa pun yang didengar dibacakan kembali. Fase 5
- * menyisipkan Gemini di antara keduanya — transkrip menjadi prompt, jawaban AI
- * yang dibacakan. Karena itu pembacaan sengaja lewat [speakBack] yang terpisah,
- * agar Fase 5 hanya perlu mengganti isinya.
+ * Fase 3 membuktikan LOOP-nya dengan membacakan kembali apa yang didengar.
+ * Fase 5 mengganti gema itu dengan jawaban Gemini: transkrip menjadi
+ * pertanyaan, jawaban AI yang dibacakan. Sisa layar tidak berubah, persis
+ * seperti yang direncanakan saat [speakBack] sengaja dipisah di Fase 3.
  */
 @HiltViewModel
 class VoiceViewModel @Inject constructor(
@@ -83,12 +114,14 @@ class VoiceViewModel @Inject constructor(
     private val prepareTextToSpeech: PrepareTextToSpeechUseCase,
     private val stopSpeaking: StopSpeakingUseCase,
     private val isSpeechRecognitionAvailable: IsSpeechRecognitionAvailableUseCase,
+    private val askAgri: AskAgriUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VoiceUiState())
     val uiState: StateFlow<VoiceUiState> = _uiState.asStateFlow()
 
     private var listenJob: Job? = null
+    private var askJob: Job? = null
 
     init {
         val available = isSpeechRecognitionAvailable()
@@ -101,7 +134,7 @@ class VoiceViewModel @Inject constructor(
             )
         }
 
-        // TTS disiapkan lebih awal supaya hasil pertama tidak tertunda oleh
+        // TTS disiapkan lebih awal supaya jawaban pertama tidak tertunda oleh
         // inisialisasi engine yang bisa memakan detik.
         viewModelScope.launch {
             val status = runCatching { prepareTextToSpeech() }
@@ -125,11 +158,18 @@ class VoiceViewModel @Inject constructor(
         // Sesi lama dibatalkan lebih dulu. Tanpa ini, tap ganda menyisakan dua
         // recognizer hidup dan yang kedua gagal dengan ERROR_RECOGNIZER_BUSY.
         listenJob?.cancel()
+        // Permintaan AI yang masih berjalan juga dibatalkan: jawabannya milik
+        // pertanyaan lama, dan bila dibiarkan ia akan mendarat di layar
+        // setelah petani mengajukan pertanyaan baru.
+        askJob?.cancel()
 
         _uiState.update {
             it.copy(
                 phase = VoicePhase.PREPARING,
                 transcript = "",
+                answer = "",
+                answerError = null,
+                isAnswerFromCache = false,
                 errorMessage = null,
                 soundLevel = 0f,
             )
@@ -156,20 +196,19 @@ class VoiceViewModel @Inject constructor(
         is SpeechEvent.FinalResult -> {
             _uiState.update {
                 it.copy(
-                    phase = VoicePhase.RESULT,
                     transcript = event.text,
                     soundLevel = 0f,
                     errorMessage = null,
                 )
             }
-            speakBack(event.text)
+            ask(event.text)
         }
 
         is SpeechEvent.Failed ->
             _uiState.update {
                 it.copy(
-                    // Kembali ke IDLE, bukan RESULT: tidak ada hasil untuk
-                    // dibacakan, dan tombol harus siap ditekan lagi.
+                    // Kembali ke IDLE, bukan RESULT: tidak ada pertanyaan untuk
+                    // dijawab, dan tombol harus siap ditekan lagi.
                     phase = VoicePhase.IDLE,
                     soundLevel = 0f,
                     errorMessage = event.message,
@@ -189,34 +228,79 @@ class VoiceViewModel @Inject constructor(
         listenJob?.cancel()
         _uiState.update {
             it.copy(
-                phase = VoicePhase.RESULT,
                 transcript = trimmed,
                 errorMessage = null,
                 soundLevel = 0f,
             )
         }
-        speakBack(trimmed)
+        ask(trimmed)
     }
 
     /**
-     * Membacakan kembali teks.
+     * Menanyakan ke AI lalu membacakan jawabannya.
      *
-     * Fase 3: gemanya adalah buktinya - apa yang didengar dibacakan ulang.
-     * Fase 5: ganti isinya dengan jawaban Gemini, sisa layar tidak berubah.
+     * Aturan yang dipegang dari Fase 3 dan tetap berlaku di sini: kegagalan
+     * TIDAK PERNAH menghapus pertanyaan petani. Ia sudah bersusah payah
+     * mengucapkannya; memaksa mengulang karena jaringan putus adalah hukuman
+     * atas kesalahan yang bukan miliknya.
      */
-    private fun speakBack(text: String) {
-        viewModelScope.launch {
-            // Kegagalan TTS TIDAK pernah menghapus transkrip: teksnya tetap
-            // terbaca di layar, jadi ini penurunan kualitas, bukan kegagalan.
-            runCatching { speakText(text) }
-                .onFailure { Timber.w(it, "Pembacaan teks gagal") }
+    private fun ask(question: String) {
+        askJob?.cancel()
+        askJob = viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    phase = VoicePhase.THINKING,
+                    answer = "",
+                    answerError = null,
+                    isAnswerFromCache = false,
+                    errorMessage = null,
+                )
+            }
+
+            when (val result = askAgri(question)) {
+                is NetworkResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            phase = VoicePhase.RESULT,
+                            answer = result.data.text,
+                            isAnswerFromCache = result.data.source == AnswerSource.CACHE,
+                        )
+                    }
+                    speak(result.data.text)
+                }
+
+                is NetworkResult.Error ->
+                    _uiState.update {
+                        it.copy(
+                            // RESULT, bukan IDLE: pertanyaannya tetap harus
+                            // terlihat di layar bersama pesan kegagalannya.
+                            phase = VoicePhase.RESULT,
+                            // answerError, BUKAN errorMessage: ini harus
+                            // bertahan di layar bersama tawaran melihat cuaca,
+                            // bukan lewat sebagai snackbar yang hilang sendiri.
+                            answerError = result.message,
+                            isRetryable = true,
+                        )
+                    }
+
+                NetworkResult.Loading -> Unit
+            }
         }
     }
 
-    /** Mengulang pembacaan hasil terakhir. */
+    /** Membacakan teks. Kegagalannya adalah penurunan kualitas, bukan kegagalan. */
+    private fun speak(text: String) {
+        viewModelScope.launch {
+            // Teks jawaban tetap terbaca di layar walau TTS gagal.
+            runCatching { speakText(text) }
+                .onFailure { Timber.w(it, "Pembacaan jawaban gagal") }
+        }
+    }
+
+    /** Mengulang pembacaan JAWABAN terakhir, bukan pertanyaannya. */
     fun replay() {
-        val text = _uiState.value.transcript
-        if (text.isNotBlank()) speakBack(text)
+        val text = _uiState.value.answer
+        if (text.isNotBlank()) speak(text)
     }
 
     fun enableTextMode() {
@@ -258,9 +342,11 @@ class VoiceViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        // Melepaskan mikrofon dan menghentikan ucapan yang masih berjalan.
-        // Tanpa ini, suara terus terdengar setelah layar ditutup.
+        // Melepaskan mikrofon, membatalkan permintaan AI yang menggantung, dan
+        // menghentikan ucapan yang masih berjalan. Tanpa ini, suara terus
+        // terdengar setelah layar ditutup.
         listenJob?.cancel()
+        askJob?.cancel()
         runCatching { stopSpeaking() }
             .onFailure { Timber.w(it, "Gagal menghentikan TTS") }
     }

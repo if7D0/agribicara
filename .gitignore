@@ -23,3 +23,15 @@ Thumbs.db
 
 # Logs
 *.log
+
+# app/google-services.json SENGAJA TIDAK di-ignore.
+# Berkas itu konfigurasi klien Firebase, bukan rahasia: isinya ikut terbungkus
+# di dalam setiap APK yang dibagikan, jadi menyembunyikannya dari repo privat
+# ini tidak menambah keamanan apa pun. Yang menjaga akses adalah App Check,
+# bukan kerahasiaan berkas ini. Di-commit supaya CI bisa build.
+# Tinjau ulang bila repo ini suatu saat dibuat publik.
+
+# Artefak OCR tangkapan layar yang dipakai saat mendiagnosis App Check.
+# Bukan bagian proyek; sengaja disebut per-nama, bukan pola luas seperti
+# *.png yang bisa diam-diam menyembunyikan aset sah nanti.
+e85af62ea6cf4b0ba356485c0c7d4736.json

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "576141699004",
+    "project_id": "agribicara",
+    "storage_bucket": "agribicara.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576141699004:android:04926577bf3142ed98adb9",
+        "android_client_info": {
+          "package_name": "com.agribicara.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrywhSFHa45FlvKks8W1r6ZjMnA9w9wMM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
