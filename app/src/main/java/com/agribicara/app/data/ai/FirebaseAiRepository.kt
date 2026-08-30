@@ -6,9 +6,6 @@ import com.agribicara.app.core.common.Constants
 import com.agribicara.app.core.common.DispatcherProvider
 import com.agribicara.app.core.common.NetworkResult
 import com.agribicara.app.domain.repository.AiRepository
-import com.google.firebase.Firebase
-import com.google.firebase.ai.ai
-import com.google.firebase.ai.type.GenerativeBackend
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
@@ -20,9 +17,10 @@ import timber.log.Timber
 /**
  * Gemini lewat Firebase AI Logic.
  *
- * Firebase dipakai, BUKAN REST langsung ke Gemini: kunci API tidak bisa
- * disembunyikan di dalam APK, dan pola itu sedang dieksploitasi di lapangan.
- * Dengan jalur ini kunci tetap di server Firebase dan akses dijaga App Check.
+ * Kelas ini memegang kebijakannya — berapa kali mengulang, kapan berhenti,
+ * pesan mana yang dibaca petani — sedangkan panggilan SDK-nya sendiri ada di
+ * [FirebaseTextGenerator] di balik [AiTextGenerator]. Pemisahan itu dibuat
+ * supaya bagian yang salahnya paling terasa bisa diuji tanpa FirebaseApp.
  *
  * Mengikuti gaya [com.agribicara.app.data.repository.WeatherRepositoryImpl]:
  * `withContext(dispatchers.io)`, pesan pengguna dari `context.getString`, dan
@@ -31,23 +29,10 @@ import timber.log.Timber
  */
 @Singleton
 class FirebaseAiRepository @Inject constructor(
+    private val generator: AiTextGenerator,
     private val dispatchers: DispatcherProvider,
     @ApplicationContext private val context: Context,
 ) : AiRepository {
-
-    /**
-     * Dibuat malas, bukan di constructor.
-     *
-     * Constructor repository ini dipanggil Hilt saat graf dibangun. Bila
-     * Firebase belum siap pada saat itu, kegagalannya akan muncul sebagai
-     * crash saat injeksi — jauh dari penyebab sebenarnya. Dengan `lazy`,
-     * kegagalan inisialisasi terjadi di dalam blok try [ask] dan berubah
-     * menjadi pesan yang bisa dibaca petani.
-     */
-    private val model by lazy {
-        Firebase.ai(backend = GenerativeBackend.googleAI())
-            .generativeModel(Constants.GEMINI_MODEL)
-    }
 
     override suspend fun ask(prompt: String): NetworkResult<String> =
         withContext(dispatchers.io) {
@@ -58,7 +43,7 @@ class FirebaseAiRepository @Inject constructor(
             // hanya menambah waktu tunggu di layar tanpa menaikkan peluang.
             repeat(Constants.AI_RETRY_COUNT + 1) { attempt ->
                 try {
-                    val text = model.generateContent(prompt).text?.trim()
+                    val text = generator.generate(prompt)?.trim()
 
                     if (!text.isNullOrEmpty()) {
                         return@withContext NetworkResult.Success(text)
@@ -85,19 +70,22 @@ class FirebaseAiRepository @Inject constructor(
         }
 
     /**
-     * Kegagalan jaringan dibedakan dari kegagalan lain.
+     * Tiga jenis kegagalan dibedakan karena menuntut tindakan berbeda.
      *
-     * Bagi petani, "tidak ada internet" dan "layanan bermasalah" menuntut
-     * tindakan berbeda: yang pertama bisa ia perbaiki sendiri, yang kedua
-     * hanya bisa ditunggu. Menyamakan keduanya membuat pesan jadi tidak
-     * berguna — pelajaran yang sama dengan SpeechErrorMapper di Fase 3.
+     * Bagi petani, "tidak ada internet", "sambungan lambat", dan "layanan
+     * bermasalah" bukan hal yang sama: yang pertama bisa ia perbaiki sendiri,
+     * yang kedua layak dicoba lagi sekarang, yang ketiga hanya bisa ditunggu.
+     * Menyamakan ketiganya membuat pesan jadi tidak berguna — pelajaran yang
+     * sama dengan SpeechErrorMapper di Fase 3, yang juga memisahkan timeout
+     * dari tidak-tersambung.
      */
     private fun messageFor(failure: Throwable?): String {
-        val isNetwork = generateSequence(failure) { it.cause }.any { it is IOException }
-        return if (isNetwork) {
-            context.getString(R.string.error_ai_offline)
-        } else {
-            context.getString(R.string.error_ai_unavailable)
+        val chain = generateSequence(failure) { it.cause }.toList()
+        val messageRes = when {
+            chain.any { it is AiTimeoutException } -> R.string.error_ai_timeout
+            chain.any { it is IOException } -> R.string.error_ai_offline
+            else -> R.string.error_ai_unavailable
         }
+        return context.getString(messageRes)
     }
 }

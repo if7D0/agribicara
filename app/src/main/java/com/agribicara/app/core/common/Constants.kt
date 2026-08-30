@@ -102,6 +102,18 @@ object Constants {
     const val AI_RETRY_COUNT = 1
 
     /**
+     * Batas tunggu satu panggilan AI.
+     *
+     * Bawaan SDK adalah 180 detik (RequestOptions.timeoutInMillis, firebase-ai
+     * 17.16.0) — terlalu panjang untuk sinyal desa: dengan [AI_RETRY_COUNT],
+     * layar bisa tertahan enam menit tanpa tombol batal, dan seluruh tangga
+     * degradasi (pesan kegagalan, jawaban tersimpan, tombol "lihat cuaca
+     * saja") antre di belakangnya. Dengan 30 detik, kasus terburuk menjadi
+     * satu menit dan petani cepat mendapat sesuatu yang bisa ditindaklanjuti.
+     */
+    const val AI_TIMEOUT_MS = 30_000L
+
+    /**
      * Umur maksimum jawaban tersimpan yang masih boleh dipakai ulang.
      *
      * Disamakan dengan [CACHE_STALE_HOURS] dengan sengaja: jawaban ini
