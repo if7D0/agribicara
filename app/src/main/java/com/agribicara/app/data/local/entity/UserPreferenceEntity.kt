@@ -7,7 +7,15 @@ import com.agribicara.app.core.common.Constants
 /**
  * Preferensi pengguna — tabel baris tunggal (id selalu [Constants.USER_PREFERENCE_ID]).
  *
- * regionCode/regionName masih null pada Fase 1; diisi oleh region picker di Fase 2.
+ * regionCode/regionName diisi oleh region picker di Fase 2.
+ *
+ * [latitude]/[longitude] TIDAK berasal dari picker: wilayah.id hanya
+ * menyediakan kode dan nama. Koordinat baru diketahui dari response BMKG yang
+ * pertama berhasil, lalu disimpan di sini supaya Open-Meteo tetap bisa
+ * dipanggil di kemudian hari saat BMKG sedang mati. Konsekuensinya, bila BMKG
+ * gagal pada pengambilan PERTAMA untuk sebuah wilayah, fallback Open-Meteo
+ * belum bisa jalan dan app jatuh ke cache/pesan error — itu perilaku yang
+ * disengaja dan ditangani eksplisit di WeatherRepositoryImpl.
  */
 @Entity(tableName = "user_preference")
 data class UserPreferenceEntity(
@@ -15,4 +23,6 @@ data class UserPreferenceEntity(
     val isOnboardingCompleted: Boolean = false,
     val regionCode: String? = null,
     val regionName: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
 )

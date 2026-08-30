@@ -24,7 +24,7 @@ class MainViewModelTest {
         (viewModel.startState.value as StartState.Ready).route
 
     @Test
-    fun `onboarding selesai mengarah ke Home`() = runTest {
+    fun `onboarding selesai mengarah ke Home`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         coEvery { dao.get(Constants.USER_PREFERENCE_ID) } returns
             UserPreferenceEntity(isOnboardingCompleted = true)
 
@@ -32,7 +32,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `belum onboarding mengarah ke Onboarding`() = runTest {
+    fun `belum onboarding mengarah ke Onboarding`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         coEvery { dao.get(Constants.USER_PREFERENCE_ID) } returns
             UserPreferenceEntity(isOnboardingCompleted = false)
 
@@ -40,14 +40,14 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `database kosong mengarah ke Onboarding`() = runTest {
+    fun `database kosong mengarah ke Onboarding`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         coEvery { dao.get(Constants.USER_PREFERENCE_ID) } returns null
 
         assertEquals(Route.ONBOARDING, routeOf(MainViewModel(dao)))
     }
 
     @Test
-    fun `kegagalan baca database tidak menggantung di layar kosong`() = runTest {
+    fun `kegagalan baca database tidak menggantung di layar kosong`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         // Regresi: sebelumnya exception di sini membuat startState selamanya
         // Loading, yang dirender sebagai layar putih tanpa jalan keluar.
         coEvery { dao.get(any()) } throws IllegalStateException("DB korup")

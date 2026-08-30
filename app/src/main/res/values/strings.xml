@@ -20,9 +20,46 @@
     <string name="home_greeting_afternoon">Selamat siang</string>
     <string name="home_greeting_evening">Selamat sore</string>
     <string name="home_greeting_night">Selamat malam</string>
-    <string name="home_weather_placeholder">Data cuaca akan tampil di sini</string>
     <string name="home_mic_label">Tekan &amp; Bicara</string>
     <string name="home_mic_not_ready">Fitur suara akan aktif segera</string>
+
+    <!-- Cuaca: label kode WMO (dipakai untuk Open-Meteo; BMKG mengirim
+         deskripsinya sendiri yang lebih diutamakan) -->
+    <string name="weather_clear">Cerah</string>
+    <string name="weather_partly_cloudy">Cerah Berawan</string>
+    <string name="weather_cloudy">Berawan</string>
+    <string name="weather_fog">Berkabut</string>
+    <string name="weather_drizzle">Gerimis</string>
+    <string name="weather_rain">Hujan</string>
+    <string name="weather_rain_showers">Hujan Lebat</string>
+    <string name="weather_snow">Salju</string>
+    <string name="weather_thunderstorm">Hujan Petir</string>
+    <string name="weather_unknown">Tidak diketahui</string>
+
+    <!-- Layar cuaca -->
+    <string name="weather_title">Cuaca</string>
+    <string name="weather_title_with_region">Cuaca — %1$s</string>
+    <string name="weather_estimated_badge">Data estimasi</string>
+    <string name="weather_offline_banner">Mode offline — menampilkan data tersimpan</string>
+    <string name="weather_retry">Coba lagi</string>
+    <string name="weather_rain_amount">Hujan %1$s mm</string>
+    <string name="weather_no_region">Pilih wilayah Anda dulu untuk melihat cuaca</string>
+    <string name="weather_choose_region">Pilih wilayah</string>
+    <string name="weather_change_region">Ganti wilayah</string>
+
+    <!-- Region picker -->
+    <string name="region_title_province">Pilih Provinsi</string>
+    <string name="region_title_regency">Pilih Kabupaten/Kota</string>
+    <string name="region_title_district">Pilih Kecamatan</string>
+    <string name="region_title_village">Pilih Desa/Kelurahan</string>
+    <string name="region_search_hint">Cari…</string>
+    <string name="region_empty">Tidak ada wilayah yang cocok</string>
+    <string name="region_retry">Coba lagi</string>
+
+    <!-- Pesan error (Bahasa Indonesia sederhana, tampil langsung ke petani) -->
+    <string name="error_weather_unavailable">Data cuaca belum bisa dimuat. Coba lagi nanti.</string>
+    <string name="error_no_cached_weather">Belum ada data cuaca tersimpan. Sambungkan internet sekali untuk memuat.</string>
+    <string name="error_region_load">Daftar wilayah gagal dimuat. Periksa koneksi Anda.</string>
 
     <!-- Content descriptions (aksesibilitas) -->
     <string name="cd_mic_button">Tombol bicara</string>

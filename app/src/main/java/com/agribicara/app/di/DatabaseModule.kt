@@ -4,7 +4,10 @@ import android.content.Context
 import androidx.room.Room
 import com.agribicara.app.core.common.Constants
 import com.agribicara.app.data.local.AppDatabase
+import com.agribicara.app.data.local.dao.RegionCacheDao
 import com.agribicara.app.data.local.dao.UserPreferenceDao
+import com.agribicara.app.data.local.dao.WeatherCacheDao
+import com.agribicara.app.data.local.migration.MIGRATION_1_2
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,9 +27,22 @@ object DatabaseModule {
         context,
         AppDatabase::class.java,
         Constants.DATABASE_NAME,
-    ).build()
+    )
+        // Migrasi eksplisit. JANGAN mengganti dengan
+        // fallbackToDestructiveMigration() — itu menghapus preferensi dan
+        // seluruh cache pengguna setiap kali versi naik.
+        .addMigrations(MIGRATION_1_2)
+        .build()
 
     @Provides
     fun provideUserPreferenceDao(database: AppDatabase): UserPreferenceDao =
         database.userPreferenceDao()
+
+    @Provides
+    fun provideWeatherCacheDao(database: AppDatabase): WeatherCacheDao =
+        database.weatherCacheDao()
+
+    @Provides
+    fun provideRegionCacheDao(database: AppDatabase): RegionCacheDao =
+        database.regionCacheDao()
 }
