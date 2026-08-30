@@ -24,6 +24,29 @@ interface UserPreferenceDao {
     suspend fun updateOnboardingCompleted(id: Int, completed: Boolean): Int
 
     /**
+     * Mengganti wilayah SEKALIGUS mengosongkan koordinat.
+     *
+     * Koordinat milik wilayah lama WAJIB ikut dibuang: kalau tidak, saat BMKG
+     * gagal untuk wilayah baru, fallback Open-Meteo akan mengambil cuaca
+     * lokasi LAMA dan menampilkannya dengan nama wilayah BARU — salah data
+     * yang tidak terlihat sama sekali oleh pengguna.
+     */
+    @Query(
+        "UPDATE user_preference SET regionCode = :code, regionName = :name, " +
+            "latitude = NULL, longitude = NULL WHERE id = :id",
+    )
+    suspend fun updateRegionColumns(id: Int, code: String, name: String): Int
+
+    /**
+     * Menyimpan koordinat kelurahan yang dipelajari dari response BMKG.
+     *
+     * Sengaja tidak menyentuh kolom lain: dipanggil dari jalur pengambilan
+     * cuaca, yang bisa berjalan bersamaan dengan penulisan lain.
+     */
+    @Query("UPDATE user_preference SET latitude = :lat, longitude = :lon WHERE id = :id")
+    suspend fun updateCoordinates(id: Int, lat: Double, lon: Double): Int
+
+    /**
      * Menandai onboarding selesai secara atomik.
      *
      * Sengaja BUKAN read-modify-write di ViewModel: pola itu bisa menimpa field
@@ -36,6 +59,26 @@ interface UserPreferenceDao {
         val updatedRows = updateOnboardingCompleted(id, true)
         if (updatedRows == 0) {
             upsert(UserPreferenceEntity(id = id, isOnboardingCompleted = true))
+        }
+    }
+
+    /**
+     * Menyimpan wilayah pilihan pengguna secara atomik.
+     *
+     * Alasannya sama dengan [markOnboardingCompleted] dan berlaku dua arah:
+     * read-modify-write di sini bisa mengembalikan `isOnboardingCompleted`
+     * ke false bila onboarding selesai di sela baca dan tulis. UPDATE
+     * bertarget hanya menyentuh dua kolom wilayah.
+     */
+    @Transaction
+    suspend fun updateRegion(
+        code: String,
+        name: String,
+        id: Int = Constants.USER_PREFERENCE_ID,
+    ) {
+        val updatedRows = updateRegionColumns(id, code, name)
+        if (updatedRows == 0) {
+            upsert(UserPreferenceEntity(id = id, regionCode = code, regionName = name))
         }
     }
 }

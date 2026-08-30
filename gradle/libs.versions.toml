@@ -18,6 +18,21 @@ datastore = "1.2.1"
 coroutines = "1.11.0"
 okhttp = "5.5.0"
 retrofit = "3.0.0"
+# Dipin di 1.9.0 secara sadar. Fakta yang sudah diuji (2026-08-29):
+#   - Gradle module metadata: 1.11.0 menuntut kotlin-stdlib 2.3.20,
+#     1.10.0 menuntut 2.3.0, 1.9.0 menuntut 2.2.0.
+#   - 1.9.0 adalah rilis terakhir yang sejalan dengan Kotlin 2.2.10 (versi
+#     compiler yang di-embed AGP 9.3.0 dan dipakai project ini).
+#   - CATATAN JUJUR: 1.11.0 SUDAH DIUJI dan ternyata tetap compile, karena
+#     Hilt 2.60.1 sudah menarik kotlin-stdlib 2.3.21 ke dependency graph
+#     sehingga syarat 2.3.20 terpenuhi tanpa kita naikkan apa pun.
+#     Jadi menaikkan versi di sini BUKAN kegagalan otomatis seperti KSP di
+#     Fase 1 — itu perbandingan yang keliru.
+# Alasan tetap di 1.9.0: menyamai jalur Kotlin milik compiler adalah pilihan
+# konservatif, dan tidak ada fitur 1.10/1.11 yang dibutuhkan Fase 2. Kalau
+# suatu saat perlu naik, itu boleh — cukup jalankan assembleRelease juga,
+# karena R8 + serializer adalah titik gagal yang sebenarnya.
+kotlinxSerialization = "1.9.0"
 coil = "2.7.0"
 timber = "5.0.1"
 desugar = "2.1.5"
@@ -56,6 +71,8 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-kotlinx-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
@@ -67,5 +84,7 @@ androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+# version.ref = kotlin (2.2.10) — plugin serialization SELALU mengikuti versi Kotlin.
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
