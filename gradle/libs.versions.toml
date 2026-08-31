@@ -48,6 +48,9 @@ desugar = "2.1.5"
 firebaseBom = "34.18.0"
 # Plugin google-services punya jalur rilis sendiri, TIDAK diatur BoM Firebase.
 googleServices = "4.4.4"
+# Kover 0.9.9 (17 Juli 2026). Mengukur coverage host test (unit test JVM);
+# instrumented test TIDAK ikut terhitung -- lihat exclusion di app/build.gradle.kts.
+kover = "0.9.9"
 junit = "4.13.2"
 mockk = "1.14.11"
 androidxTestRunner = "1.7.0"
@@ -118,3 +121,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
