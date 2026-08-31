@@ -73,11 +73,26 @@
           Gejalanya menyesatkan: build tetap sukses dan aplikasi tetap jalan.
           Kegagalannya baru terlihat ketika worker benar-benar dijalankan.
           Jangan dihapus.
+
+          PERHATIAN - yang dihapus HANYA meta-data milik WorkManager, BUKAN
+          provider-nya. InitializationProvider adalah titik masuk BERSAMA untuk
+          seluruh androidx App Startup: emoji2 (font emoji), profileinstaller
+          (baseline profile - startup rilis di perangkat murah), dan
+          lifecycle-process (ProcessLifecycleOwner) semuanya menumpang di sana.
+          tools:node="remove" pada provider mematikan ketiganya sekaligus, dan
+          tidak ada satu pun test, lint, atau build yang menangkapnya.
+          Verifikasi ada di ManifestInitializerTest.
         -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
-            tools:node="remove" />
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
     </application>
 
 </manifest>
