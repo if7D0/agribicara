@@ -56,8 +56,10 @@ class AiRequestOptionsTest {
     @Test
     fun `timeout berbeda dari bawaan SDK yang 180 detik`() {
         // Membuktikan opsinya BENAR-BENAR diisi, bukan kebetulan sama dengan
-        // bawaan. Bawaan SDK dibaca dari SDK-nya sendiri, bukan ditulis ulang
-        // sebagai angka, supaya kalau Firebase mengubahnya test ini ikut tahu.
+        // bawaan. Bawaannya DIBACA dari SDK lewat RequestOptions() kosong,
+        // lalu dipaku ke 180 detik sebagai tripwire: kalau Firebase suatu saat
+        // mengubah bawaannya, test ini memerah dan memberi tahu, alih-alih
+        // lolos diam-diam dengan asumsi yang sudah basi.
         val bawaanSdk = timeoutMillis(RequestOptions())
 
         assertEquals(180_000L, bawaanSdk)
