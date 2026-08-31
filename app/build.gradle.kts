@@ -80,12 +80,28 @@ kover {
         filters {
             excludes {
                 /*
-                 * SATU panggilan classes(), bukan beberapa. Kover memakai
-                 * panggilan terakhir bila dipanggil lebih dari sekali, dan
-                 * memecahnya sempat membuat AppDatabase terkecualikan
-                 * sementara AppDatabase_Impl (102 baris bangkitan) tetap
-                 * terhitung. Gejalanya menipu: angkanya turun, jadi tampak
-                 * seolah filternya bekerja.
+                 * Glob harus cocok dengan SELURUH nama berkualifikasi penuh.
+                 *
+                 * Ini sebab sebenarnya AppDatabase_Impl (102 baris bangkitan)
+                 * sempat tetap terhitung padahal sudah didaftarkan: pola
+                 * "Hilt_*" menuntut nama DIMULAI dengan "Hilt_", sehingga ia
+                 * tidak pernah cocok dengan com.agribicara.app.Hilt_MainActivity.
+                 * Yang benar "*Hilt_*". Bandingkan "*_Impl" yang berhasil justru
+                 * karena sudah diawali "*".
+                 *
+                 * Aturan kedua: setiap FQN butuh pasangan "$*". Tanpa itu
+                 * kelasnya terkecualikan tetapi kelas lambda di dalamnya
+                 * (misalnya ...$listener$1) tetap terhitung.
+                 *
+                 * Daftar disatukan dalam satu panggilan classes() semata demi
+                 * keterbacaan, BUKAN karena panggilan ganda bermasalah. Itu
+                 * sempat saya kira penyebabnya dan itu KELIRU: Kover
+                 * menggabungkan panggilan classes() yang berulang. Dibuktikan
+                 * dengan menambahkan panggilan kedua berisi satu kelas lalu
+                 * membandingkan XML-nya -- kelas dari panggilan kedua ikut
+                 * terkecualikan SEMENTARA kelas dari panggilan pertama tetap
+                 * terkecualikan. Yang dulu membuat angkanya membaik adalah
+                 * perbaikan glob di atas, bukan penggabungannya.
                  */
                 classes(
                     // --- kode bangkitan, bukan tulisan manusia -------------
