@@ -14,6 +14,7 @@ import com.agribicara.app.presentation.theme.Dimens
 import com.agribicara.app.presentation.voice.VoiceContent
 import com.agribicara.app.presentation.voice.VoiceUiState
 import java.time.LocalDate
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -56,7 +57,11 @@ class TouchTargetInvariantTest {
         val jumlah = nodes.fetchSemanticsNodes().size
         // Nol node berarti layarnya tidak jadi dirender — itu kegagalan test,
         // bukan kelulusan diam-diam.
-        assert(jumlah > 0) { "Tidak ada elemen interaktif yang ditemukan" }
+        // assertTrue JUnit, BUKAN kotlin.assert: yang terakhir dijaga
+        // _Assertions.ENABLED yang berasal dari desiredAssertionStatus(), dan
+        // di Android nilainya false. Penjaga ini sebelumnya no-op — persis
+        // kelulusan diam-diam yang komentarnya klaim dicegah.
+        assertTrue("Tidak ada elemen interaktif yang ditemukan", jumlah > 0)
 
         repeat(jumlah) { index ->
             nodes[index]

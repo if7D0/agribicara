@@ -40,6 +40,8 @@ private val AgriLightColors = lightColorScheme(
     onSurfaceVariant = OnSurfaceDark,
     outline = OutlineGrey,
     error = ErrorRed,
+    errorContainer = ErrorContainerLight,
+    onErrorContainer = OnErrorContainerDark,
     onError = White,
 )
 
@@ -68,6 +70,8 @@ private val AgriDarkColors = darkColorScheme(
     onSurfaceVariant = OnSurfaceVariantLight,
     outline = OutlineGreyDark,
     error = ErrorRedLight,
+    errorContainer = ErrorContainerDark,
+    onErrorContainer = ErrorContainerLight,
     onError = OnErrorDark,
 )
 

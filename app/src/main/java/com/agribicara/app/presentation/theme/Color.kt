@@ -21,6 +21,17 @@ val SurfaceVariantLight = Color(0xFFEFF1EC)
 val OnSurfaceDark = Color(0xFF1A1C19)
 val OutlineGrey = Color(0xFF72796F)
 val ErrorRed = Color(0xFFBA1A1A)
+
+/*
+ * Peran errorContainer dipakai OfflineBanner. Sebelumnya tidak
+ * didefinisikan sama sekali sehingga jatuh ke bawaan Material — kebetulan
+ * aman, tetapi kebetulan bukan alasan. Nilainya ditetapkan eksplisit di
+ * sini supaya rasionya ikut terukur seperti peran lain.
+ *
+ *   OnErrorContainerDark di atas ErrorContainerLight .... 13.26:1
+ */
+val ErrorContainerLight = Color(0xFFFFDAD6)
+val OnErrorContainerDark = Color(0xFF410002)
 val White = Color(0xFFFFFFFF)
 
 /*
@@ -42,6 +53,7 @@ val White = Color(0xFFFFFFFF)
  *   BrownDark       di atas BrownLight ........... 8.47:1
  *   OnSurfaceDark   di atas YellowAccent ......... 8.71:1
  *   OnErrorDark     di atas ErrorRedLight ........ 7.72:1
+ *   ErrorContainerLight di atas ErrorContainerDark  7.24:1
  *   OutlineGreyDark di atas SurfaceDark .......... 5.87:1
  *
  * Peran primary/tertiary/error di mode gelap dipakai ulang dari token terang
@@ -57,3 +69,4 @@ val BrownContainerDark = Color(0xFF4E342E)
 val OutlineGreyDark = Color(0xFF8C9388)
 val ErrorRedLight = Color(0xFFFFB4AB)
 val OnErrorDark = Color(0xFF690005)
+val ErrorContainerDark = Color(0xFF93000A)
