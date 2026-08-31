@@ -29,6 +29,11 @@ import org.junit.Test
  * Diuji di JVM dengan DAO palsu, bukan instrumented: yang diuji di sini adalah
  * KEBIJAKAN pembandingnya. Bahwa Room benar-benar bisa menyimpan dan membaca
  * barisnya diuji terpisah di `androidTest/SentAlertDaoTest`.
+ *
+ * Test terakhir di berkas ini memaku sebuah CELAH, bukan sebuah jaminan.
+ * Gerbang ini hanya mengingat satu peringatan terakhir, jadi kejadian lain
+ * yang menyela bisa membuat peringatan lama lolos lagi. Ia ditulis supaya
+ * batas itu terlihat dan tidak dikira sudah tertutup.
  */
 class AlertHistoryTest {
 
@@ -141,5 +146,43 @@ class AlertHistoryTest {
 
         assertFalse(history.belumPernahDikirim(badaiHariIni))
         assertEquals(LocalDate.of(2026, 8, 31), badaiHariIni.date)
+    }
+
+    @Test
+    fun `peringatan yang diselingi kejadian lain LOLOS lagi - batas yang diketahui`() = runTest {
+        // Ini BUKAN perilaku yang diinginkan. Test ini memakunya supaya
+        // batasnya terlihat, bukan supaya ia dianggap benar.
+        //
+        // Hanya SATU peringatan terakhir yang diingat (SentAlertDao.get()
+        // membaca satu baris ber-id tetap), jadi yang dijamin bukan "belum
+        // pernah dikirim" melainkan "tidak identik dengan yang TERAKHIR
+        // dikirim". Begitu ada kejadian lain menyela, catatan peringatan
+        // pertama tertimpa dan ia bisa dikirim ulang.
+        //
+        // Urutan ini bisa terjadi sungguhan: ExtremeWeatherRule memakai
+        // firstNotNullOfOrNull sehingga selalu mengambil hari memenuhi syarat
+        // PALING AWAL. Hujan sore hari ini terkirim pagi; siang harinya slot
+        // itu lewat sehingga yang paling awal menjadi badai besok; sore
+        // pembaruan BMKG menambah slot hujan malam untuk hari ini, dan hari
+        // ini kembali menjadi yang paling awal.
+        var tersimpan: SentAlertEntity? = null
+        coEvery { dao.get(any()) } answers { tersimpan }
+        coEvery { dao.upsert(any()) } answers { tersimpan = firstArg() }
+
+        val hujanHariIni = badaiHariIni.copy(reason = AlertReason.HEAVY_RAIN)
+        val badaiBesok = badaiHariIni.copy(date = LocalDate.of(2026, 9, 1))
+
+        assertTrue(history.belumPernahDikirim(hujanHariIni))
+        history.catat(hujanHariIni)
+
+        assertTrue(history.belumPernahDikirim(badaiBesok))
+        history.catat(badaiBesok)
+
+        // Petani sudah diberi tahu tentang hujan hari ini, tetapi gerbangnya
+        // melewatkannya lagi karena catatannya sudah tertimpa badai besok.
+        assertTrue(
+            "Batas yang diketahui: peringatan yang diselingi kejadian lain lolos lagi",
+            history.belumPernahDikirim(hujanHariIni),
+        )
     }
 }

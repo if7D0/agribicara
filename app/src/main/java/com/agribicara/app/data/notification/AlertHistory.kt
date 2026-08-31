@@ -49,6 +49,19 @@ class AlertHistory @Inject constructor(
      * menjadi "badai hari ini" TIDAK dikirim ulang, karena tanggalnya sama.
      * Petani sudah diberi tahu tentang kejadian itu, dan memberitahukannya
      * lagi hanya karena labelnya berubah adalah pengulangan yang sama saja.
+     *
+     * **Batas yang diketahui dan BELUM ditutup.** Yang diingat hanya SATU
+     * peringatan terakhir — [SentAlertDao.get] membaca satu baris ber-id tetap
+     * dan [catat] menimpanya. Jadi yang dijamin bukan "belum pernah dikirim",
+     * melainkan "tidak identik dengan yang TERAKHIR dikirim". Bila kejadian
+     * lain menyela di antaranya, catatan yang pertama tertimpa dan peringatan
+     * itu bisa muncul lagi. Urutannya bisa terjadi sungguhan karena
+     * [com.agribicara.app.domain.weather.ExtremeWeatherRule] selalu mengambil
+     * hari memenuhi syarat paling awal, dan hari mana yang paling awal bisa
+     * berpindah saat slot berlalu lalu pembaruan BMKG menambah slot baru.
+     * Dipaku oleh test `peringatan yang diselingi kejadian lain LOLOS lagi`.
+     * Menutupnya menuntut riwayat N peringatan atau kunci komposit, bukan
+     * baris tunggal — pekerjaan Fase 8.
      */
     suspend fun belumPernahDikirim(alert: WeatherAlert): Boolean {
         val terakhir = dao.get() ?: return true
