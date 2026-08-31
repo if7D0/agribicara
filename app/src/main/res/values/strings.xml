@@ -103,6 +103,8 @@
 
     <!-- Content descriptions (aksesibilitas) -->
     <string name="cd_mic_button">Tombol bicara</string>
+    <string name="cd_weather_today">Cuaca hari ini</string>
+    <string name="cd_weather_temperature">%1$d derajat Celsius</string>
     <!-- Bahasa Indonesia tidak mengenal infleksi jamak, jadi <plurals> tidak diperlukan. -->
     <string name="cd_onboarding_progress" tools:ignore="PluralsCandidate">Langkah %1$d dari %2$d</string>
 
@@ -121,4 +123,14 @@
     <string name="error_ai_timeout">Sambungan terlalu lambat, jawabannya belum sampai. Coba tanya lagi, atau lihat cuaca yang tersimpan.</string>
     <string name="error_ai_blocked">Maaf, pertanyaan itu belum bisa dijawab. Coba tanyakan dengan kalimat lain.</string>
     <string name="error_ai_empty_question">Pertanyaannya masih kosong.</string>
+
+    <!-- Fase 6: notifikasi cuaca ekstrem. Kalimatnya menyebut APA dan KAPAN,
+         karena petani perlu memutuskan tindakan, bukan sekadar diberi tahu. -->
+    <string name="weather_alert_channel_name">Peringatan cuaca ekstrem</string>
+    <string name="weather_alert_channel_description">Pemberitahuan saat hujan lebat atau badai diperkirakan datang di wilayah Anda.</string>
+    <string name="weather_alert_title_thunderstorm">Badai diperkirakan %1$s</string>
+    <string name="weather_alert_title_heavy_rain">Hujan lebat diperkirakan %1$s</string>
+    <string name="weather_alert_body">Di %1$s. Ketuk untuk melihat prakiraan selengkapnya.</string>
+    <string name="weather_alert_today">hari ini</string>
+    <string name="weather_alert_tomorrow">besok</string>
 </resources>

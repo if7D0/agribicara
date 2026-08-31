@@ -133,4 +133,62 @@ object Constants {
      * bertindak.
      */
     const val PROMPT_FORECAST_DAYS = 3
+
+    // --- Fase 6: notifikasi cuaca ekstrem ----------------------------------
+
+    /**
+     * Curah hujan sehari yang dianggap ekstrem.
+     *
+     * 50 mm/hari adalah batas bawah kategori "hujan lebat" BMKG. Sengaja
+     * konservatif: notifikasi yang terlalu sering justru diabaikan, dan
+     * peringatan yang diabaikan sama tidak bergunanya dengan tidak ada.
+     */
+    const val EXTREME_RAIN_MM_PER_DAY = 50.0
+
+    /**
+     * Berapa hari ke depan yang diperiksa untuk peringatan.
+     *
+     * Dibatasi 2 karena hanya hari-hari awal yang berasal dari BMKG; hari
+     * jauh adalah estimasi Open-Meteo dan tidak layak membangunkan petani.
+     */
+    const val ALERT_LOOKAHEAD_DAYS = 2
+
+    /**
+     * Panjang satu slot prakiraan BMKG, dalam jam.
+     *
+     * BMKG mengirim prakiraan per 3 jam (lihat `data/mapper/BmkgMapper`).
+     * Dipakai [com.agribicara.app.domain.weather.ExtremeWeatherRule] untuk
+     * memutuskan slot mana yang sudah lewat: sebuah slot baru dianggap
+     * selesai setelah awalnya ditambah durasi ini, sehingga badai yang sedang
+     * berlangsung tidak ikut terbuang bersama badai yang sudah berakhir.
+     */
+    const val FORECAST_SLOT_HOURS = 3L
+
+    /**
+     * Id baris tunggal tabel `sent_alert`.
+     *
+     * Alasannya sama dengan [USER_PREFERENCE_ID]: hanya ada satu peringatan
+     * terakhir yang perlu diingat, dan baris tetap ber-id konstan membuat
+     * penulisannya idempoten tanpa perlu query pencarian.
+     */
+    const val SENT_ALERT_ID = 1
+
+    /**
+     * Jarak antar pemeriksaan cuaca di latar belakang.
+     *
+     * Disamakan dengan [CACHE_STALE_HOURS]: memeriksa lebih sering hanya akan
+     * membaca cache yang sama tanpa data baru. WorkManager punya interval
+     * minimum 15 menit dan Doze dapat menundanya berjam-jam di perangkat
+     * murah — ini peringatan dini yang mungkin telat, BUKAN alarm.
+     */
+    const val WEATHER_CHECK_INTERVAL_HOURS = 6L
+
+    /** Id channel notifikasi cuaca ekstrem. Tidak boleh berubah setelah rilis. */
+    const val WEATHER_ALERT_CHANNEL_ID = "weather_alert"
+
+    /** Satu notifikasi cuaca menggantikan yang sebelumnya, tidak menumpuk. */
+    const val WEATHER_ALERT_NOTIFICATION_ID = 1001
+
+    /** Nama pekerjaan periodik; dipakai untuk enqueueUniquePeriodicWork. */
+    const val WEATHER_CHECK_WORK_NAME = "weather_check"
 }

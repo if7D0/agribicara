@@ -100,3 +100,32 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         )
     }
 }
+
+/**
+ * v3 -> v4: catatan peringatan cuaca yang sudah ditampilkan (Fase 6).
+ *
+ * Satu tabel baru, tidak ada tabel lama yang disentuh. Preferensi, cache
+ * cuaca, cache wilayah, dan riwayat percakapan semuanya selamat.
+ *
+ * Tabelnya sengaja dibiarkan kosong setelah migrasi. Konsekuensinya: pengguna
+ * yang meng-update aplikasi bisa menerima satu kali peringatan ulang untuk
+ * kejadian yang sudah pernah diberitahukan versi lama. Itu ditukar dengan
+ * tidak menebak-nebak isi baris yang datanya memang belum pernah ada.
+ *
+ * SQL di bawah disalin PERSIS dari app/schemas/.../4.json (`createSql`), bukan
+ * ditulis dari ingatan. MigrationTest membandingkan hasil migrasi ini dengan
+ * skema bangkitan Room; perbedaan sekecil apa pun akan menggagalkannya.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `sent_alert` (" +
+                "`id` INTEGER NOT NULL, " +
+                "`regionCode` TEXT NOT NULL, " +
+                "`date` TEXT NOT NULL, " +
+                "`reason` TEXT NOT NULL, " +
+                "`notifiedAt` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`id`))",
+        )
+    }
+}

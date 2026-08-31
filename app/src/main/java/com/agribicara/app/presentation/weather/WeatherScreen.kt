@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,7 +76,11 @@ fun WeatherScreen(
                     ?: stringResource(R.string.weather_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = Dimens.SpaceMedium),
+                modifier = Modifier
+                    .padding(top = Dimens.SpaceMedium)
+                    // Judul layar. Ditandai heading supaya TalkBack bisa
+                    // melompat ke sini, bukan menyapu tujuh baris prakiraan.
+                    .semantics { heading() },
             )
 
             // Satu-satunya jalan mengganti wilayah setelah terpilih. Tanpa ini
@@ -110,7 +116,10 @@ fun WeatherScreen(
                             textAlign = TextAlign.Center,
                         )
                         Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
-                        Button(onClick = onChooseRegion) {
+                        Button(
+                            onClick = onChooseRegion,
+                            modifier = Modifier.heightIn(min = Dimens.TouchTargetMin),
+                        ) {
                             Text(stringResource(R.string.weather_choose_region))
                         }
                     }
@@ -125,7 +134,10 @@ fun WeatherScreen(
                             textAlign = TextAlign.Center,
                         )
                         Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
-                        Button(onClick = viewModel::refresh) {
+                        Button(
+                            onClick = viewModel::refresh,
+                            modifier = Modifier.heightIn(min = Dimens.TouchTargetMin),
+                        ) {
                             Text(stringResource(R.string.weather_retry))
                         }
                     }

@@ -1,5 +1,10 @@
 package com.agribicara.app.presentation.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,13 +30,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,6 +64,12 @@ import com.agribicara.app.presentation.theme.Dimens
  * diminta di sini melainkan di layar suara, tepat saat dibutuhkan - Home harus
  * tetap bisa dipakai oleh petani yang belum mau memberi izin.
  * Kartu cuaca sudah terisi data nyata sejak Fase 2.
+ *
+ * Sejak Fase 6 layar ini hanya mengumpulkan state dan meneruskannya ke
+ * [HomeContent]. Pemisahan itu bukan kosmetik: `hiltViewModel()` menuntut graf
+ * Hilt yang hidup, sehingga selama isi layar menempel padanya, satu-satunya
+ * cara mengujinya adalah membangun infrastruktur test Hilt. [HomeContent] bisa
+ * diuji dengan `createComposeRule()` biasa.
  */
 @Composable
 fun HomeScreen(
@@ -70,6 +90,63 @@ fun HomeScreen(
         onPauseOrDispose { }
     }
 
+    NotificationPermissionRequest(hasRegion = !uiState.needsRegion)
+
+    HomeContent(
+        uiState = uiState,
+        onOpenWeather = onOpenWeather,
+        onChooseRegion = onChooseRegion,
+        onOpenVoice = onOpenVoice,
+        modifier = modifier,
+    )
+}
+
+/**
+ * Meminta izin notifikasi, sekali, dan hanya setelah wilayah dipilih.
+ *
+ * Bukan saat app pertama dibuka: pada saat itu aplikasi belum tahu wilayah
+ * mana pun sehingga belum ada yang bisa diperingatkan, dan permintaan izin
+ * yang datang tanpa konteks lebih mungkin ditolak. Setelah petani memilih
+ * desanya, peringatan cuaca punya arti yang jelas.
+ *
+ * Di bawah API 33 izin ini diberikan otomatis, jadi tidak ada yang diminta.
+ * Penolakan tidak diikuti apa pun — tidak ada dialog penjelasan, tidak ada
+ * permintaan ulang. Notifikasi adalah tambahan, dan memaksa tambahan hanya
+ * membuat petani belajar menutup dialog tanpa membaca.
+ */
+@Composable
+private fun NotificationPermissionRequest(hasRegion: Boolean) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+
+    val context = LocalContext.current
+    var sudahDiminta by rememberSaveable { mutableStateOf(false) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { /* Ditolak pun tidak ada yang berubah selain notifikasi. */ }
+
+    LaunchedEffect(hasRegion, sudahDiminta) {
+        if (!hasRegion || sudahDiminta) return@LaunchedEffect
+
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+
+        sudahDiminta = true
+        if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+}
+
+/** Isi layar Home tanpa ketergantungan ke ViewModel. Diuji langsung. */
+@Composable
+internal fun HomeContent(
+    uiState: HomeUiState,
+    onOpenWeather: () -> Unit,
+    onChooseRegion: () -> Unit,
+    onOpenVoice: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Scaffold(
         modifier = modifier.testTag("home_screen"),
     ) { innerPadding ->
@@ -84,7 +161,12 @@ fun HomeScreen(
                 text = stringResource(uiState.greetingRes),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // Sapaan adalah judul layar ini. Ditandai heading supaya
+                    // TalkBack bisa melompat antar bagian, bukan memaksa
+                    // petani menyapu seluruh layar satu per satu.
+                    .semantics { heading() },
             )
 
             Spacer(modifier = Modifier.height(Dimens.SpaceLarge))
@@ -144,13 +226,21 @@ private fun WeatherCard(
     onChooseRegion: () -> Unit,
 ) {
     val clickAction = if (uiState.needsRegion) onChooseRegion else onOpenWeather
+    val summary = uiState.today?.let { weatherCardDescription(it, uiState) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = Dimens.TouchTargetMin)
             .clickable(onClick = clickAction)
-            .testTag("weather_placeholder"),
+            .testTag("weather_placeholder")
+            // Digabung jadi SATU node. Tanpa ini TalkBack membacakan ikon,
+            // suhu, deskripsi, dan nama wilayah sebagai empat perhentian
+            // terpisah — informasinya benar tetapi susunannya tidak bisa
+            // dipahami sebagai satu kalimat.
+            .semantics(mergeDescendants = true) {
+                if (summary != null) contentDescription = summary
+            },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
@@ -174,6 +264,24 @@ private fun WeatherCard(
             }
         }
     }
+}
+
+/**
+ * Satu kalimat utuh untuk TalkBack.
+ *
+ * Disusun dari bagian yang memang terlihat di layar, bukan teks terpisah:
+ * pengguna TalkBack dan pengguna awas harus mendapat informasi yang sama.
+ */
+@Composable
+private fun weatherCardDescription(day: DailyForecast, uiState: HomeUiState): String {
+    val parts = listOfNotNull(
+        stringResource(R.string.cd_weather_today),
+        uiState.regionName,
+        day.temperatureMax?.let { stringResource(R.string.cd_weather_temperature, it.toInt()) },
+        day.description ?: stringResource(WeatherCodeMapper.labelFor(day.weatherCode)),
+        stringResource(R.string.weather_offline_banner).takeIf { uiState.isOffline },
+    )
+    return parts.joinToString(", ")
 }
 
 @Composable

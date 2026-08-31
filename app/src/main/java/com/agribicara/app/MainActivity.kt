@@ -21,13 +21,18 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // targetSdk 37 memaksa edge-to-edge dan membuat status bar transparan.
-        // Tanpa gaya eksplisit ini, ikon sistem tetap terang di atas latar terang
-        // aplikasi sehingga jam/baterai/sinyal praktis tak terlihat — bertentangan
-        // langsung dengan syarat kontras tinggi untuk pemakaian di luar ruangan.
+        // targetSdk 37 memaksa edge-to-edge dan membuat status bar transparan,
+        // jadi gaya ikon sistem HARUS diatur sendiri — kalau tidak,
+        // jam/baterai/sinyal bisa senada dengan latar dan praktis tak terlihat.
+        //
+        // `auto`, BUKAN `light`. Sampai Fase 5 nilainya `light`, yang mengunci
+        // ikon sistem ke nada gelap; itu benar selama aplikasi hanya punya satu
+        // skema terang. Begitu mode gelap ada (Fase 6), kunci itu berbalik
+        // merugikan: ikon gelap di atas status bar gelap. `auto` mengikuti mode
+        // yang sedang aktif sehingga kontrasnya terjaga di kedua arah.
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(
-                scrim = android.graphics.Color.TRANSPARENT,
+            statusBarStyle = SystemBarStyle.auto(
+                lightScrim = android.graphics.Color.TRANSPARENT,
                 darkScrim = android.graphics.Color.TRANSPARENT,
             ),
         )

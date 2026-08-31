@@ -44,6 +44,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -101,6 +104,52 @@ fun VoiceScreen(
         onDispose { viewModel.stopListening() }
     }
 
+    VoiceContent(
+        uiState = uiState,
+        snackbarHostState = snackbarHostState,
+        onOpenWeather = onOpenWeather,
+        onSubmitText = viewModel::submitTypedText,
+        onSwitchToVoice = viewModel::disableTextMode,
+        onMicClick = {
+            if (uiState.isListening) {
+                viewModel.stopListening()
+            } else if (context.hasRecordAudioPermission()) {
+                viewModel.startListening()
+            } else {
+                // Izin diminta saat mic ditekan, bukan saat app dibuka:
+                // onboarding sudah menjelaskan alasannya, jadi permintaannya
+                // datang tepat saat dibutuhkan.
+                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        },
+        onReplay = viewModel::replay,
+        onSwitchToText = viewModel::enableTextMode,
+        modifier = modifier,
+    )
+}
+
+/**
+ * Isi layar suara tanpa ketergantungan ke ViewModel.
+ *
+ * Dipisah supaya tangga degradasi Fase 5 — pesan kegagalan yang permanen dan
+ * tawaran "lihat cuaca saja" — bisa diuji tanpa membangun graf Hilt. Itu jalur
+ * yang paling sering ditemui petani bersinyal lemah, jadi justru jalur itu yang
+ * paling perlu penjaga regresi.
+ */
+@Composable
+internal fun VoiceContent(
+    uiState: VoiceUiState,
+    onOpenWeather: () -> Unit,
+    onSubmitText: (String) -> Unit,
+    onSwitchToVoice: () -> Unit,
+    onMicClick: () -> Unit,
+    onReplay: () -> Unit,
+    onSwitchToText: () -> Unit,
+    modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+) {
+    val context = LocalContext.current
+
     Scaffold(
         modifier = modifier.testTag("voice_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -119,27 +168,16 @@ fun VoiceScreen(
 
             if (uiState.isTextMode) {
                 TextQuestionInput(
-                    onSubmit = viewModel::submitTypedText,
+                    onSubmit = onSubmitText,
                     canSwitchToVoice = !uiState.isSpeechUnavailable,
-                    onSwitchToVoice = viewModel::disableTextMode,
+                    onSwitchToVoice = onSwitchToVoice,
                 )
             } else {
                 VoiceControls(
                     uiState = uiState,
-                    onMicClick = {
-                        if (uiState.isListening) {
-                            viewModel.stopListening()
-                        } else if (context.hasRecordAudioPermission()) {
-                            viewModel.startListening()
-                        } else {
-                            // Izin diminta saat mic ditekan, bukan saat app
-                            // dibuka: onboarding sudah menjelaskan alasannya,
-                            // jadi permintaannya datang tepat saat dibutuhkan.
-                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
-                    },
-                    onReplay = viewModel::replay,
-                    onSwitchToText = viewModel::enableTextMode,
+                    onMicClick = onMicClick,
+                    onReplay = onReplay,
+                    onSwitchToText = onSwitchToText,
                 )
             }
 
@@ -231,7 +269,17 @@ private fun TranscriptArea(uiState: VoiceUiState, onOpenWeather: () -> Unit) {
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.testTag("voice_answer"),
+                modifier = Modifier
+                    .testTag("voice_answer")
+                    // Jawaban muncul tanpa petani menyentuh apa pun. Tanpa
+                    // liveRegion, pengguna TalkBack tidak diberi tahu bahwa
+                    // jawabannya sudah datang dan harus menyapu layar untuk
+                    // menemukannya sendiri.
+                    //
+                    // Polite, BUKAN Assertive: Assertive menyela, dan aplikasi
+                    // ini membacakan jawabannya sendiri lewat TTS — menyela
+                    // suara sendiri hanya membuat keduanya tidak terdengar.
+                    .semantics { liveRegion = LiveRegionMode.Polite },
             )
 
             if (uiState.isAnswerFromCache) {
@@ -256,14 +304,21 @@ private fun TranscriptArea(uiState: VoiceUiState, onOpenWeather: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.error,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.testTag("voice_answer_error"),
+                modifier = Modifier
+                    .testTag("voice_answer_error")
+                    .semantics { liveRegion = LiveRegionMode.Polite },
             )
             Spacer(modifier = Modifier.height(Dimens.SpaceSmall))
             // Cuaca tersimpan tetap berguna tanpa internet, jadi layar ini
             // tidak pernah menjadi jalan buntu meski jawaban gagal didapat.
             TextButton(
                 onClick = onOpenWeather,
-                modifier = Modifier.testTag("voice_open_weather"),
+                // heightIn eksplisit: tinggi bawaan TextButton Material3
+                // hanya 40dp, di bawah NFR 48dp. Preseden yang sama sudah
+                // dipakai tombol "ganti wilayah" di layar cuaca.
+                modifier = Modifier
+                    .heightIn(min = Dimens.TouchTargetMin)
+                    .testTag("voice_open_weather"),
             ) {
                 Text(stringResource(R.string.ai_open_weather))
             }
@@ -298,12 +353,22 @@ private fun VoiceControls(
         // di fase RESULT walau jawabannya gagal didapat, lalu tidak melakukan
         // apa-apa saat ditekan.
         if (uiState.canReplay) {
-            TextButton(onClick = onReplay, modifier = Modifier.testTag("voice_replay")) {
+            TextButton(
+                onClick = onReplay,
+                modifier = Modifier
+                    .heightIn(min = Dimens.TouchTargetMin)
+                    .testTag("voice_replay"),
+            ) {
                 Text(stringResource(R.string.voice_replay))
             }
         }
 
-        TextButton(onClick = onSwitchToText, modifier = Modifier.testTag("voice_switch_text")) {
+        TextButton(
+            onClick = onSwitchToText,
+            modifier = Modifier
+                .heightIn(min = Dimens.TouchTargetMin)
+                .testTag("voice_switch_text"),
+        ) {
             Text(stringResource(R.string.voice_switch_to_text))
         }
     }
@@ -365,7 +430,12 @@ private fun TextQuestionInput(
         }
 
         if (canSwitchToVoice) {
-            TextButton(onClick = onSwitchToVoice, modifier = Modifier.testTag("voice_switch_voice")) {
+            TextButton(
+                onClick = onSwitchToVoice,
+                modifier = Modifier
+                    .heightIn(min = Dimens.TouchTargetMin)
+                    .testTag("voice_switch_voice"),
+            ) {
                 Text(stringResource(R.string.voice_switch_to_voice))
             }
         }
@@ -414,7 +484,9 @@ private fun OpenSettingsAction(context: Context) {
             ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
             runCatching { context.startActivity(intent) }
         },
-        modifier = Modifier.testTag("voice_open_settings"),
+        modifier = Modifier
+            .heightIn(min = Dimens.TouchTargetMin)
+            .testTag("voice_open_settings"),
     ) {
         Text(stringResource(R.string.voice_permission_open_settings))
     }
