@@ -1,6 +1,8 @@
 # Gradle
 .gradle/
 build/
+# Sesi kompiler Kotlin (KGP). Artefak build, muncul sendiri saat gradle jalan.
+.kotlin/
 !gradle/wrapper/gradle-wrapper.jar
 
 # Local configuration (SDK path, API keys) — NEVER commit
