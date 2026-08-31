@@ -98,6 +98,20 @@ object Constants {
      */
     const val AI_MAX_SENTENCES = 3
 
+    /**
+     * Batas panjang pertanyaan yang diteruskan ke model.
+     *
+     * Ucapan manusia yang wajar jauh di bawah ini — satu kalimat pertanyaan
+     * petani biasanya di bawah 100 karakter, dan hasil STT untuk satu tarikan
+     * napas jarang melewati 200. Batas ini bukan untuk mereka.
+     *
+     * Gunanya menahan teks raksasa yang ditempel ke kolom input membanjiri
+     * instruksi di atasnya. Model bekerja pada jendela terbatas: pertanyaan
+     * yang cukup panjang bisa mendorong aturan menjawab keluar dari perhatian
+     * model, dan aturan itulah yang menahannya menyebut dosis pestisida.
+     */
+    const val AI_MAX_QUESTION_CHARS = 500
+
     /** Berapa kali panggilan AI diulang setelah kegagalan sesaat. */
     const val AI_RETRY_COUNT = 1
 
