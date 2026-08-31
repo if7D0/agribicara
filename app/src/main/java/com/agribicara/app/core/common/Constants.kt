@@ -154,6 +154,26 @@ object Constants {
     const val ALERT_LOOKAHEAD_DAYS = 2
 
     /**
+     * Panjang satu slot prakiraan BMKG, dalam jam.
+     *
+     * BMKG mengirim prakiraan per 3 jam (lihat `data/mapper/BmkgMapper`).
+     * Dipakai [com.agribicara.app.domain.weather.ExtremeWeatherRule] untuk
+     * memutuskan slot mana yang sudah lewat: sebuah slot baru dianggap
+     * selesai setelah awalnya ditambah durasi ini, sehingga badai yang sedang
+     * berlangsung tidak ikut terbuang bersama badai yang sudah berakhir.
+     */
+    const val FORECAST_SLOT_HOURS = 3L
+
+    /**
+     * Id baris tunggal tabel `sent_alert`.
+     *
+     * Alasannya sama dengan [USER_PREFERENCE_ID]: hanya ada satu peringatan
+     * terakhir yang perlu diingat, dan baris tetap ber-id konstan membuat
+     * penulisannya idempoten tanpa perlu query pencarian.
+     */
+    const val SENT_ALERT_ID = 1
+
+    /**
      * Jarak antar pemeriksaan cuaca di latar belakang.
      *
      * Disamakan dengan [CACHE_STALE_HOURS]: memeriksa lebih sering hanya akan

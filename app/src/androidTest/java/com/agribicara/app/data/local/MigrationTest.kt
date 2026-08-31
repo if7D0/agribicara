@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.agribicara.app.data.local.migration.MIGRATION_1_2
 import com.agribicara.app.data.local.migration.MIGRATION_2_3
+import com.agribicara.app.data.local.migration.MIGRATION_3_4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -177,6 +178,87 @@ class MigrationTest {
         val db = helper.runMigrationsAndValidate(TEST_DB, 3, true, MIGRATION_2_3)
 
         db.query("SELECT COUNT(*) FROM chat_message").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun migrasi3Ke4MempertahankanSeluruhDataLama() {
+        // Peringatan cuaca (Fase 6) menambah satu tabel. Riwayat percakapan,
+        // cache cuaca, dan preferensi harus lolos tanpa tergores.
+        helper.createDatabase(TEST_DB, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO user_preference " +
+                    "(id, isOnboardingCompleted, regionCode, regionName, latitude, longitude) " +
+                    "VALUES (1, 1, '11.01.01.2001', 'Keude Bakongan', 3.0, 97.4)",
+            )
+            db.execSQL(
+                "INSERT INTO weather_cache " +
+                    "(regionCode, date, temperatureMax, temperatureMin, precipitationMm, " +
+                    "windSpeed, weatherCode, description, source, fetchedAt) " +
+                    "VALUES ('11.01.01.2001', '2026-08-31', 31.0, 24.0, 0.0, 4.0, 1, " +
+                    "'Cerah', 'BMKG', 1700000000000)",
+            )
+            db.execSQL(
+                "INSERT INTO chat_message (role, text, questionKey, regionCode, createdAt) " +
+                    "VALUES ('USER', 'kapan memupuk padi', 'kapan memupuk padi', " +
+                    "'11.01.01.2001', 1700000000000)",
+            )
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 4, true, MIGRATION_3_4)
+
+        db.query("SELECT regionName FROM user_preference WHERE id = 1").use { cursor ->
+            assertTrue("Preferensi hilang setelah migrasi", cursor.moveToFirst())
+            assertEquals("Keude Bakongan", cursor.getString(0))
+        }
+        db.query("SELECT COUNT(*) FROM weather_cache").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+        db.query("SELECT COUNT(*) FROM chat_message").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun migrasi3Ke4MembuatTabelPeringatanYangBisaDitulis() {
+        helper.createDatabase(TEST_DB, 3).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 4, true, MIGRATION_3_4)
+
+        db.execSQL(
+            "INSERT INTO sent_alert (id, regionCode, date, reason, notifiedAt) " +
+                "VALUES (1, '11.01.01.2001', '2026-08-31', 'THUNDERSTORM', 1700000000000)",
+        )
+        // Baris tunggal: peringatan berikutnya MENIMPA, tidak menumpuk.
+        db.execSQL(
+            "INSERT OR REPLACE INTO sent_alert (id, regionCode, date, reason, notifiedAt) " +
+                "VALUES (1, '11.01.01.2001', '2026-09-01', 'HEAVY_RAIN', 1700000003600)",
+        )
+
+        db.query("SELECT COUNT(*) FROM sent_alert").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+        db.query("SELECT reason FROM sent_alert WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("HEAVY_RAIN", cursor.getString(0))
+        }
+    }
+
+    @Test
+    fun migrasi3Ke4MulaiDenganTabelKosong() {
+        // Sengaja kosong: pengguna yang meng-update bisa menerima satu kali
+        // peringatan ulang, dan itu lebih jujur daripada menebak isi baris
+        // yang datanya memang belum pernah ada.
+        helper.createDatabase(TEST_DB, 3).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 4, true, MIGRATION_3_4)
+
+        db.query("SELECT COUNT(*) FROM sent_alert").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }

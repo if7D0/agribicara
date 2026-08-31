@@ -5,12 +5,16 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.agribicara.app.core.common.NetworkResult
+import com.agribicara.app.data.notification.AlertHistory
 import com.agribicara.app.data.notification.WeatherNotifier
+import com.agribicara.app.domain.model.WeatherAlert
 import com.agribicara.app.domain.usecase.GetForecastUseCase
 import com.agribicara.app.domain.usecase.ObserveSelectedRegionUseCase
 import com.agribicara.app.domain.weather.ExtremeWeatherRule
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import java.time.Clock
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
@@ -31,6 +35,8 @@ class WeatherCheckWorker @AssistedInject constructor(
     private val getForecast: GetForecastUseCase,
     private val observeSelectedRegion: ObserveSelectedRegionUseCase,
     private val notifier: WeatherNotifier,
+    private val alertHistory: AlertHistory,
+    private val clock: Clock,
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
@@ -49,10 +55,8 @@ class WeatherCheckWorker @AssistedInject constructor(
 
         return when (val result = getForecast(region.code, region.name)) {
             is NetworkResult.Success -> {
-                ExtremeWeatherRule.evaluate(result.data)?.let { alert ->
-                    Timber.i("Cuaca ekstrem terdeteksi: %s", alert.reason)
-                    notifier.notify(alert)
-                }
+                ExtremeWeatherRule.evaluate(result.data, LocalDateTime.now(clock))
+                    ?.let { alert -> beritahuSekaliSaja(alert) }
                 Result.success()
             }
 
@@ -65,6 +69,26 @@ class WeatherCheckWorker @AssistedInject constructor(
             }
 
             NetworkResult.Loading -> Result.success()
+        }
+    }
+
+    /**
+     * Urutan ketiga langkahnya penting dan tidak boleh ditukar.
+     *
+     * Diperiksa dulu, ditampilkan, baru dicatat. Mencatat sebelum menampilkan
+     * membuat peringatan yang gagal tampil dianggap sudah tersampaikan;
+     * menampilkan tanpa memeriksa mengembalikan pengulangan empat kali sehari
+     * yang justru dihilangkan oleh [AlertHistory].
+     */
+    private suspend fun beritahuSekaliSaja(alert: WeatherAlert) {
+        if (!alertHistory.belumPernahDikirim(alert)) {
+            Timber.d("Peringatan %s untuk %s sudah pernah dikirim", alert.reason, alert.date)
+            return
+        }
+
+        Timber.i("Cuaca ekstrem terdeteksi: %s", alert.reason)
+        if (notifier.notify(alert)) {
+            alertHistory.catat(alert)
         }
     }
 }

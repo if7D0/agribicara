@@ -38,10 +38,17 @@ class WeatherNotifier @Inject constructor(
     /**
      * Menampilkan [alert], atau diam bila izinnya belum ada.
      *
+     * Mengembalikan true HANYA bila notifikasinya benar-benar diserahkan ke
+     * sistem. Nilai ini bukan hiasan: `AlertHistory` memakainya untuk
+     * memutuskan apakah peringatan boleh dicatat sebagai sudah tersampaikan.
+     * Mencatat peringatan yang ternyata tidak pernah tampil — karena izinnya
+     * ditolak, misalnya — akan membungkam kejadian itu selamanya, bahkan
+     * setelah petani memberikan izinnya.
+     *
      * Tidak pernah melempar. Pemanggilnya adalah Worker latar belakang, dan
      * gagal memberi tahu bukan alasan untuk menandai pekerjaannya gagal.
      */
-    fun notify(alert: WeatherAlert) {
+    fun notify(alert: WeatherAlert): Boolean {
         // Diperiksa, bukan ditangkap. Sebelumnya SecurityException-nya ditelan
         // runCatching; lint benar menolak itu, dan memang memeriksa lebih baik:
         // menolak izin adalah keadaan normal yang layak dicatat sebagai
@@ -54,7 +61,7 @@ class WeatherNotifier @Inject constructor(
 
         if (!bolehMemberitahu) {
             Timber.d("Notifikasi cuaca dilewati: izin POST_NOTIFICATIONS belum diberikan")
-            return
+            return false
         }
 
         ensureChannel()
@@ -78,10 +85,12 @@ class WeatherNotifier @Inject constructor(
         // notifikasi sistem tercapai. Ditelan dengan sengaja — pemanggilnya
         // Worker latar belakang, dan gagal memberi tahu bukan alasan untuk
         // menandai pekerjaannya gagal lalu mengulanginya terus-menerus.
-        runCatching {
+        // Kegagalannya tetap DILAPORKAN lewat nilai kembalian, bukan hilang.
+        return runCatching {
             NotificationManagerCompat.from(context)
                 .notify(Constants.WEATHER_ALERT_NOTIFICATION_ID, notification)
         }.onFailure { Timber.w(it, "Notifikasi cuaca tidak bisa ditampilkan") }
+            .isSuccess
     }
 
     /**
