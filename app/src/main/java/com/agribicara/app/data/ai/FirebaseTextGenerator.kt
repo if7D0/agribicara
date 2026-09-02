@@ -4,7 +4,6 @@ import com.agribicara.app.core.common.Constants
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
-import com.google.firebase.ai.type.RequestOptions
 import com.google.firebase.ai.type.RequestTimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,7 +42,7 @@ class FirebaseTextGenerator @Inject constructor() : AiTextGenerator {
                 modelName = Constants.GEMINI_MODEL,
                 // Tanpa ini SDK memakai bawaannya, 180 detik. Lihat
                 // Constants.AI_TIMEOUT_MS untuk alasan lengkapnya.
-                requestOptions = RequestOptions(timeoutInMillis = Constants.AI_TIMEOUT_MS),
+                requestOptions = aiRequestOptions(),
             )
     }
 
