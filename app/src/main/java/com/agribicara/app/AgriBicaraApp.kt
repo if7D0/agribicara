@@ -3,10 +3,14 @@ package com.agribicara.app
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.agribicara.app.data.appcheck.AppCheckProvider
+import com.agribicara.app.data.appcheck.AppCheckProviderChoice
+import com.agribicara.app.data.logging.CrashReportingTree
 import com.agribicara.app.data.worker.WeatherCheckScheduler
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import timber.log.Timber
@@ -43,11 +47,16 @@ class AgriBicaraApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        // Debug mencetak ke logcat; rilis meneruskan WARN/ERROR/ASSERT ke
+        // Crashlytics. Keduanya eksklusif: menanam DebugTree di rilis akan
+        // membocorkan isi log ke logcat perangkat siapa pun yang menyambungkan
+        // kabel. Jangan log data pribadi di rilis — pertanyaan petani adalah
+        // kalimat bebas yang bisa memuat apa saja.
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
+        } else {
+            Timber.plant(CrashReportingTree())
         }
-        // Build rilis: tree yang meneruskan WARN/ERROR ke Crashlytics
-        // ditambahkan di Fase 8. Jangan log data pribadi di rilis.
 
         installAppCheck()
 
@@ -67,22 +76,29 @@ class AgriBicaraApp : Application(), Configuration.Provider {
      * tokens. Token itu terikat pada instalasi, jadi tiap perangkat uji baru
      * butuh pendaftarannya sendiri.
      *
-     * BUILD RILIS SENGAJA TIDAK PUNYA PROVIDER APA PUN, jadi fitur AI **tidak akan
-     * bekerja di APK rilis** sampai Play Integrity dipasang di Fase 8. Ini dicatat
-     * terang-terangan, bukan dilewat diam-diam: memasang debug provider di rilis
-     * akan membuat App Check bisa dipalsukan siapa saja yang membongkar APK.
+     * Build rilis memakai Play Integrity sejak Fase 8. Debug provider TIDAK
+     * PERNAH boleh dipasang di rilis: ia membuat App Check bisa dipalsukan siapa
+     * saja yang membongkar APK. Keputusan itu tinggal di [AppCheckProviderChoice]
+     * supaya bisa diuji — kelas ini sendiri tidak bisa dijalankan di JVM.
+     *
+     * **Yang masih bisa gagal senyap di sini, dan tidak tertangkap test mana pun:**
+     * Play Integrity menuntut SHA-256 sertifikat penanda tangan terdaftar di
+     * Firebase. Dengan Play App Signing, sertifikat pada APK yang benar-benar
+     * dipasang petani adalah milik Google, bukan upload key. Bila yang terdaftar
+     * keliru, setiap panggilan Gemini ditolak dan gejalanya menyerupai gangguan
+     * jaringan biasa. Lihat `docs/play/release-checklist.md` butir B6-B8.
      */
     private fun installAppCheck() {
         FirebaseApp.initializeApp(this)
 
+        val factory = when (AppCheckProviderChoice.forBuild(BuildConfig.DEBUG)) {
+            AppCheckProvider.DEBUG -> DebugAppCheckProviderFactory.getInstance()
+            AppCheckProvider.PLAY_INTEGRITY -> PlayIntegrityAppCheckProviderFactory.getInstance()
+        }
+        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(factory)
+
         if (BuildConfig.DEBUG) {
-            FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-                DebugAppCheckProviderFactory.getInstance(),
-            )
             Timber.i("App Check debug provider terpasang; cari debug token di logcat")
-        } else {
-            // Fase 8: PlayIntegrityAppCheckProviderFactory.getInstance()
-            Timber.w("App Check tidak dipasang di build rilis — panggilan AI akan ditolak")
         }
     }
 }

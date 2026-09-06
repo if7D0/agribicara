@@ -121,7 +121,7 @@ class WeatherRepositoryImpl @Inject constructor(
         }
 
         // Seluruh jaringan gagal — pakai cache walaupun sudah basi.
-        Timber.w("BMKG dan Open-Meteo sama-sama gagal untuk %s, memakai cache", regionCode)
+        Timber.w("BMKG dan Open-Meteo sama-sama gagal, memakai cache")
         if (cached.isEmpty()) {
             NetworkResult.Error(context.getString(R.string.error_no_cached_weather))
         } else {
@@ -166,7 +166,7 @@ class WeatherRepositoryImpl @Inject constructor(
         if (!response.isSuccessful) {
             // Retrofit TIDAK melempar untuk 4xx/5xx — 404 "Data not found"
             // sampai ke sini sebagai response yang secara teknis sukses.
-            Timber.w("BMKG membalas HTTP %d untuk %s", response.code(), regionCode)
+            Timber.w("BMKG membalas HTTP %d", response.code())
             return@callOrNull null
         }
         val body = response.body() ?: return@callOrNull null

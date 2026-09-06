@@ -48,6 +48,12 @@ desugar = "2.1.5"
 firebaseBom = "34.18.0"
 # Plugin google-services punya jalur rilis sendiri, TIDAK diatur BoM Firebase.
 googleServices = "4.4.4"
+# Plugin Crashlytics (Fase 8) juga punya jalur rilis sendiri — alasan yang sama
+# dengan googleServices di atas. Diverifikasi terhadap maven-metadata.xml Google
+# Maven 2026-09-02: latest = release = 3.0.8, lastUpdated 2026-08-19.
+# JANGAN menyamakannya dengan versi artefak firebase-crashlytics (20.1.0) —
+# keduanya angka yang sama sekali berbeda dan mudah tertukar.
+crashlyticsPlugin = "3.0.8"
 # Kover 0.9.9 (17 Juli 2026). Mengukur coverage host test (unit test JVM);
 # instrumented test TIDAK ikut terhitung -- lihat exclusion di app/build.gradle.kts.
 kover = "0.9.9"
@@ -106,6 +112,14 @@ firebase-ai = { group = "com.google.firebase", name = "firebase-ai" }
 # App Check ditegakkan otomatis untuk AI Logic sejak Juli 2026; debug provider
 # dipakai HANYA di build debug (lihat AgriBicaraApp).
 firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }
+# Fase 8. Provider App Check untuk build RILIS. Tanpa ini build rilis tidak punya
+# provider sama sekali dan setiap panggilan Gemini ditolak saat runtime meskipun
+# build sukses. BoM 34.18.0 memin 19.4.1 — sama dengan appcheck-debug, dan tetap
+# TIDAK ditulis di sini.
+firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
+# Fase 8. Crashlytics: crash di perangkat petani sampai ke developer tanpa petani
+# perlu melapor. BoM memin 20.1.0; versinya tetap tidak ditulis.
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 # Varian Android dari mockk, dibutuhkan instrumented test WeatherCheckWorker.
@@ -122,3 +136,7 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+# Mengunggah mapping R8 otomatis supaya stack trace rilis terbaca, bukan
+# ter-obfuscate. Tanpa plugin ini artefak firebase-crashlytics tetap mengirim
+# crash, tetapi isinya tidak bisa dibaca siapa pun.
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlyticsPlugin" }

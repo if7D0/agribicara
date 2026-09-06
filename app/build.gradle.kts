@@ -1,5 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+// WAJIB di-import, tidak bisa ditulis lengkap sebagai java.util.Properties():
+// di dalam skrip Kotlin DSL, `java` lebih dulu resolve ke accessor extension
+// milik Gradle (JavaPluginExtension), sehingga `java.util` gagal dengan
+// "Unresolved reference 'util'" — pesan yang sama sekali tidak menyinggung
+// bahwa penyebabnya adalah tabrakan nama.
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,7 +14,25 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.kover)
+}
+
+/**
+ * Material penanda tangan build rilis (Fase 8).
+ *
+ * Berkasnya SENGAJA tidak ada di repo — `keystore.properties` dan `*.jks` sudah
+ * masuk .gitignore sejak Fase 1. Templatnya ada di `keystore.properties.example`.
+ *
+ * Dibaca dengan penjagaan `exists()` karena CI menjalankan `assembleRelease`
+ * tanpa punya keystore sama sekali (lihat .github/workflows/ci.yml). Tanpa
+ * penjagaan itu CI merah dengan pesan yang tidak menyinggung signing sedikit pun.
+ */
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -21,15 +45,44 @@ android {
         // Android 7.0 — target device murah di desa (NFR PRD)
         minSdk = 24
         targetSdk = 37
+        /*
+         * versionCode TIDAK BOLEH turun atau diulang, selamanya, untuk satu
+         * applicationId. Sekali sebuah angka terunggah ke track mana pun —
+         * internal testing sekalipun — angka itu hangus permanen. Naikkan +1
+         * setiap unggahan, bukan setiap rilis.
+         *
+         * Masih 1 karena belum pernah ada unggahan ke Play sama sekali.
+         */
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        // Dibuat HANYA bila keystore-nya benar-benar ada. Mendaftarkan
+        // signingConfig yang menunjuk berkas tidak ada membuat build gagal saat
+        // eksekusi, bukan saat konfigurasi — jadi gejalanya muncul jauh dari
+        // sebabnya.
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+
+            // findByName, BUKAN getByName: yang kedua MELEMPAR saat config-nya
+            // tidak dibuat. null berarti build rilis tetap unsigned — persis
+            // perilaku yang dibutuhkan CI, dan persis perilaku sebelum Fase 8.
+            signingConfig = signingConfigs.findByName("release")
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -142,6 +195,18 @@ kover {
                     "com.agribicara.app.data.ai.FirebaseTextGenerator",
                     "com.agribicara.app.data.ai.FirebaseTextGenerator$*",
 
+                    // Fase 8. Alasan yang persis sama dengan FirebaseTextGenerator
+                    // di atas: menyentuh SDK Firebase, tidak bisa dibangun di JVM,
+                    // dan sengaja dangkal. Seluruh keputusannya ada di
+                    // CrashLogPolicy, yang justru punya test.
+                    //
+                    // AppCheckProviderChoice dan CrashLogPolicy TIDAK ada di daftar
+                    // ini, dan itu disengaja — keduanya objek murni yang punya unit
+                    // test sendiri. Mengecualikan mereka akan menyembunyikan justru
+                    // kode yang paling perlu diukur.
+                    "com.agribicara.app.data.logging.CrashReportingTree",
+                    "com.agribicara.app.data.logging.CrashReportingTree$*",
+
                     // Membungkus NotificationCompat dan PendingIntent; jalur
                     // keputusannya diuji lewat WeatherCheckWorkerTest.
                     "com.agribicara.app.data.notification.WeatherNotifier",
@@ -247,6 +312,11 @@ dependencies {
     // balik penjagaan BuildConfig.DEBUG. Konstanta itu compile-time, jadi seluruh
     // cabangnya lenyap saat build release dan kelasnya tidak pernah ikut ter-APK.
     implementation(libs.firebase.appcheck.debug)
+    // Fase 8. Pasangan rilis dari baris di atas: tanpa ini build rilis tidak punya
+    // provider App Check sama sekali dan SETIAP panggilan Gemini ditolak runtime.
+    implementation(libs.firebase.appcheck.playintegrity)
+    // Fase 8. Crash dan log WARN/ERROR dari build rilis.
+    implementation(libs.firebase.crashlytics)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
