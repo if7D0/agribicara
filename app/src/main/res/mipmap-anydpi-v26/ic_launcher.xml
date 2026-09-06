@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon, berlaku API 26 ke atas.
+
+  API 24-25 TIDAK membaca berkas ini sama sekali dan jatuh ke mipmap-*dpi/
+  ic_launcher.png. Menghapus PNG itu membuat ikon hilang persis di perangkat
+  tertua yang didukung (minSdk 24) - yaitu justru kelas perangkat target PRD.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
+</adaptive-icon>

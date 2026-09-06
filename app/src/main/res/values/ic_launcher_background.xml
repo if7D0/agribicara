@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Warna latar adaptive icon. Hijau yang sama dengan ikon placeholder Fase 1 dan
+  dengan Color.kt, supaya ikon toko, ikon launcher, dan warna aksen di dalam
+  aplikasi terbaca sebagai satu merek.
+
+  Dijadikan resource warna, bukan ditulis langsung di ic_launcher.xml, karena
+  ia dipakai dua berkas (ic_launcher dan ic_launcher_round) dan perender aset
+  toko (tools/StoreAssets.java) membaca nilai yang sama.
+-->
+<resources>
+    <color name="ic_launcher_background">#2E7D32</color>
+</resources>

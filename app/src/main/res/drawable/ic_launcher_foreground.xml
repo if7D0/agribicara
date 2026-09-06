@@ -1,0 +1,52 @@
+<!--
+  Lapis depan adaptive icon (Fase 8). Mikrofon dengan satu daun.
+
+  SELURUH konten wajib berada di dalam lingkaran berdiameter 66dp yang berpusat
+  di kanvas 108dp — yaitu jarak maksimum 33 dari titik (54,54). Di luar itu,
+  sistem memotongnya, dan setiap launcher memakai mask yang berbeda-beda
+  sehingga kerusakannya tidak terlihat di perangkat penguji mana pun secara
+  konsisten. Titik terjauh pada gambar ini adalah ujung palang alas di (42,82)
+  dan (66,82), berjarak 30,5 dari pusat.
+
+  Ikon lama (drawable/ic_launcher.xml Fase 1) menggambar kotak penuh 108x108
+  sampai ke tepi; memindahkannya apa adanya ke adaptive icon akan membuat
+  motifnya terpotong.
+
+  Mikrofon dipilih sebagai mark utama karena voice-first adalah diferensiator
+  produk ini. Satu daun ditambahkan supaya tidak tertukar dengan aplikasi
+  perekam suara mana pun.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Badan mikrofon: kapsul x45..63, y28..60 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M45,37 a9,9 0 0 1 18,0 v14 a9,9 0 0 1 -18,0 z" />
+
+    <!-- Busur "sedang mendengarkan": setengah lingkaran r=15 di bawah badan -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M39,52 v3 a15,15 0 0 0 30,0 v-3" />
+
+    <!-- Tiang -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M51.5,70 h5 v9 h-5 z" />
+
+    <!-- Palang alas -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,78 h24 a2,2 0 0 1 0,4 h-24 a2,2 0 0 1 0,-4 z" />
+
+    <!-- Daun yang tumbuh dari pangkal tiang -->
+    <path
+        android:fillColor="#A5D6A7"
+        android:pathData="M50,75 c-6,0 -11,-4 -12,-10 c6,-1 11,3 12,10 z" />
+</vector>

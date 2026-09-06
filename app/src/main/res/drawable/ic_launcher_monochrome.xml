@@ -1,0 +1,39 @@
+<!--
+  Themed icon (Android 13+). Geometrinya SAMA PERSIS dengan
+  ic_launcher_foreground.xml, hanya tanpa dua warna: sistem mewarnai ulang
+  seluruh bentuk mengikuti wallpaper pengguna, jadi daun yang di sana berwarna
+  #A5D6A7 di sini ikut putih.
+
+  Kalau geometrinya kelak diubah, UBAH KEDUANYA. Tidak ada satu pun test, lint,
+  atau build yang akan menyadari bila keduanya berbeda — ikon bertema hanya
+  terlihat pada perangkat yang menyalakan tema ikon.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M45,37 a9,9 0 0 1 18,0 v14 a9,9 0 0 1 -18,0 z" />
+
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M39,52 v3 a15,15 0 0 0 30,0 v-3" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M51.5,70 h5 v9 h-5 z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,78 h24 a2,2 0 0 1 0,4 h-24 a2,2 0 0 1 0,-4 z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,75 c-6,0 -11,-4 -12,-10 c6,-1 11,3 12,10 z" />
+</vector>
