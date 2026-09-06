@@ -1,0 +1,241 @@
+<!doctype html>
+<!--
+  Versi siap-terbit dari privacy-policy.md.
+
+  Sumber kebenarannya tetap berkas .md di folder yang sama — kalau salah satu
+  diubah, UBAH KEDUANYA. Tidak ada yang memeriksa keduanya sinkron.
+
+  Cara menerbitkan (lihat docs/play/release-checklist.md butir C10):
+    1. Buat repo publik baru, mis. if7D0/agribicara-legal
+    2. Salin berkas ini ke sana sebagai index.html
+    3. Settings -> Pages -> Deploy from branch -> main / (root)
+    4. URL yang dihasilkan dipakai di Play Console
+
+  Repo utama tetap privat; hanya dokumen legal yang publik.
+-->
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kebijakan Privasi AgriBicara</title>
+<style>
+  :root {
+    --hijau: #2E7D32;
+    --teks: #1A1C19;
+    --teks-lembut: #4A4F47;
+    --latar: #FFFBFF;
+    --garis: #D8DDD4;
+    --kartu: #F1F5EF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --hijau: #A5D6A7;
+      --teks: #E2E3DD;
+      --teks-lembut: #C3C8BC;
+      --latar: #12140E;
+      --garis: #43483E;
+      --kartu: #1C1F19;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0 1.25rem 4rem;
+    background: var(--latar);
+    color: var(--teks);
+    font: 17px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 44rem; margin: 0 auto; }
+  header {
+    border-bottom: 3px solid var(--hijau);
+    padding: 2.5rem 0 1.25rem;
+    margin-bottom: 2rem;
+  }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .75rem; }
+  h2 {
+    font-size: 1.3rem;
+    margin: 2.5rem 0 .75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--garis);
+  }
+  h3 { font-size: 1.05rem; margin: 1.75rem 0 .5rem; }
+  .meta { color: var(--teks-lembut); font-size: .92rem; margin: 0; }
+  .ringkas {
+    background: var(--kartu);
+    border-left: 4px solid var(--hijau);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .ringkas ul { margin: .5rem 0 0; padding-left: 1.2rem; }
+  .ringkas li { margin: .4rem 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .95rem; }
+  th, td { text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--garis); vertical-align: top; }
+  th { color: var(--teks-lembut); font-weight: 600; }
+  a { color: var(--hijau); }
+  code {
+    background: var(--kartu);
+    padding: .1rem .35rem;
+    border-radius: 4px;
+    font-size: .9em;
+  }
+  .tabel-bungkus { overflow-x: auto; }
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--garis);
+    color: var(--teks-lembut);
+    font-size: .92rem;
+  }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>Kebijakan Privasi AgriBicara</h1>
+  <p class="meta">
+    Berlaku sejak 2 September 2026 &middot; Terakhir diperbarui 2 September 2026<br>
+    Aplikasi: AgriBicara (<code>com.agribicara.app</code>)
+  </p>
+</header>
+
+<p>
+  AgriBicara adalah aplikasi gratis untuk petani kecil di Indonesia. Anda bertanya
+  dengan suara, dan aplikasi menjawab dengan suara berdasarkan prakiraan cuaca desa
+  Anda.
+</p>
+<p>
+  Dokumen ini menjelaskan data apa yang aplikasi pakai, ke mana data itu pergi, dan
+  apa yang tidak pernah kami lakukan. Ditulis sesederhana mungkin, karena Anda yang
+  memakainya, bukan pengacara.
+</p>
+
+<div class="ringkas">
+  <strong>Ringkas</strong>
+  <ul>
+    <li><strong>Tidak ada akun.</strong> Tidak perlu mendaftar, tidak perlu nomor telepon atau email.</li>
+    <li><strong>Tidak ada iklan.</strong> Aplikasi ini gratis dan tidak menampilkan iklan.</li>
+    <li><strong>Kami tidak menjual data Anda</strong> kepada siapa pun.</li>
+    <li><strong>Aplikasi tidak memakai GPS</strong> dan tidak meminta izin lokasi. Anda memilih sendiri desa Anda dari daftar.</li>
+    <li><strong>Riwayat pertanyaan tersimpan di HP Anda saja</strong> dan tidak pernah dikirim ke mana pun.</li>
+  </ul>
+</div>
+
+<h2>Data yang aplikasi pakai</h2>
+
+<h3>1. Suara Anda</h3>
+<p>
+  Ketika Anda menekan tombol mikrofon dan berbicara, suara Anda diproses oleh
+  layanan pengenalan suara bawaan Android (milik Google) untuk diubah menjadi teks.
+  AgriBicara tidak menyimpan rekaman suara Anda dan tidak mengirimkannya ke server
+  kami &mdash; kami memang tidak punya server sendiri.
+</p>
+<p>Izin yang dipakai: <strong>Mikrofon</strong>. Anda bisa menolaknya; aplikasi tetap bisa dipakai lewat pengetikan teks.</p>
+
+<h3>2. Pertanyaan Anda dan cuaca desa Anda</h3>
+<p>
+  Teks pertanyaan Anda digabung dengan ringkasan prakiraan cuaca desa Anda, lalu
+  dikirim ke layanan kecerdasan buatan Google (Gemini melalui Firebase AI Logic)
+  supaya jawabannya sesuai dengan cuaca yang sebenarnya. Jawabannya dikembalikan ke
+  HP Anda dan dibacakan.
+</p>
+<p>
+  Yang dikirim hanya teks pertanyaan dan angka cuaca. Tidak ada nama, nomor telepon,
+  atau identitas Anda yang ikut dikirim &mdash; aplikasi memang tidak memilikinya.
+</p>
+
+<h3>3. Pilihan desa Anda</h3>
+<p>
+  Untuk mengambil prakiraan cuaca, aplikasi mengirim <strong>kode wilayah</strong>
+  desa yang Anda pilih (contoh: <code>11.01.01.2001</code>) ke tiga layanan publik:
+</p>
+<ul>
+  <li><strong>BMKG</strong> (<code>api.bmkg.go.id</code>) &mdash; prakiraan cuaca resmi Indonesia, hari 1&ndash;3</li>
+  <li><strong>Open-Meteo</strong> (<code>api.open-meteo.com</code>) &mdash; cadangan bila BMKG tidak bisa dihubungi, dan estimasi hari 4&ndash;7</li>
+  <li><strong>wilayah.id</strong> (<code>wilayah.id</code>) &mdash; daftar nama provinsi sampai desa</li>
+</ul>
+<p>
+  Yang dikirim adalah <strong>kode desa yang Anda pilih sendiri</strong>, bukan
+  lokasi HP Anda. Aplikasi tidak pernah membaca GPS.
+</p>
+
+<h3>4. Laporan kerusakan aplikasi</h3>
+<p>
+  Bila aplikasi berhenti mendadak atau mengalami kesalahan, laporan teknisnya
+  dikirim ke <strong>Firebase Crashlytics</strong> (milik Google) supaya kami bisa
+  memperbaikinya. Laporan berisi jenis perangkat, versi Android, dan letak kesalahan
+  di dalam kode.
+</p>
+<p><strong>Isi pertanyaan Anda dan nama desa Anda tidak ikut dikirim dalam laporan ini.</strong></p>
+
+<h3>5. Data yang hanya tersimpan di HP Anda</h3>
+<p>Hal-hal berikut disimpan di dalam HP Anda dan <strong>tidak pernah dikirim ke mana pun</strong>:</p>
+<ul>
+  <li>Riwayat pertanyaan dan jawaban</li>
+  <li>Prakiraan cuaca yang tersimpan agar bisa dilihat saat tidak ada sinyal</li>
+  <li>Desa yang Anda pilih</li>
+  <li>Catatan peringatan cuaca yang sudah dikirim, agar tidak dikirim berulang</li>
+</ul>
+<p>Semuanya hilang bila Anda menghapus data aplikasi atau mencopot aplikasinya.</p>
+
+<h2>Izin yang diminta aplikasi</h2>
+<div class="tabel-bungkus">
+<table>
+  <thead>
+    <tr><th>Izin</th><th>Untuk apa</th><th>Kalau ditolak</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Mikrofon</td><td>Mendengar pertanyaan Anda</td><td>Aplikasi tetap jalan; gunakan pengetikan teks</td></tr>
+    <tr><td>Internet</td><td>Mengambil cuaca dan jawaban</td><td>Aplikasi hanya menampilkan cuaca tersimpan</td></tr>
+    <tr><td>Status jaringan</td><td>Mengetahui Anda sedang online atau tidak</td><td>&mdash;</td></tr>
+    <tr><td>Notifikasi</td><td>Memberi peringatan cuaca ekstrem</td><td>Aplikasi tetap jalan penuh, hanya tanpa peringatan</td></tr>
+  </tbody>
+</table>
+</div>
+<p>
+  Aplikasi <strong>tidak</strong> meminta izin lokasi, kamera, kontak, penyimpanan,
+  maupun telepon.
+</p>
+
+<h2>Pihak ketiga</h2>
+<p>Data yang keluar dari HP Anda hanya menuju:</p>
+<ul>
+  <li><strong>Google</strong> (Firebase AI Logic, pengenalan suara Android, Crashlytics) &mdash; <a href="https://policies.google.com/privacy">kebijakan privasi Google</a></li>
+  <li><strong>BMKG</strong> &mdash; badan meteorologi pemerintah Indonesia</li>
+  <li><strong>Open-Meteo</strong> &mdash; layanan cuaca terbuka</li>
+  <li><strong>wilayah.id</strong> &mdash; daftar wilayah administratif Indonesia</li>
+</ul>
+<p>Kami tidak menjual, menyewakan, atau menukarkan data Anda kepada siapa pun.</p>
+
+<h2>Anak-anak</h2>
+<p>
+  Aplikasi ini ditujukan untuk petani dewasa. Kami tidak mengumpulkan data secara
+  sengaja dari anak di bawah 13 tahun.
+</p>
+
+<h2>Menghapus data Anda</h2>
+<p>
+  Karena tidak ada akun dan tidak ada data Anda di server kami, menghapus data cukup
+  dilakukan dari HP Anda:
+</p>
+<p><strong>Setelan &rarr; Aplikasi &rarr; AgriBicara &rarr; Penyimpanan &rarr; Hapus data</strong></p>
+<p>atau cukup copot aplikasinya.</p>
+
+<h2>Perubahan kebijakan ini</h2>
+<p>
+  Bila kebijakan ini berubah, tanggal &ldquo;Terakhir diperbarui&rdquo; di atas ikut
+  berubah dan versi barunya diterbitkan di halaman yang sama.
+</p>
+
+<h2>Hubungi kami</h2>
+<p>Pertanyaan tentang kebijakan ini bisa dikirim ke:</p>
+<p><strong>[ISI ALAMAT EMAIL KONTAK DI SINI SEBELUM DITERBITKAN]</strong></p>
+
+<footer>
+  AgriBicara &middot; aplikasi gratis untuk petani kecil Indonesia
+</footer>
+
+</main>
+</body>
+</html>
