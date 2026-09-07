@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Path yang boleh dibagikan lewat FileProvider (Fase 4).
+
+  Hanya subfolder `detection/` di cacheDir: foto sementara hasil kamera sistem
+  ditulis ke sini, lalu dibaca kembali untuk diklasifikasi. Tidak ada data
+  pengguna lain yang terekspos.
+-->
+<paths>
+    <cache-path name="detection_images" path="detection/" />
+</paths>
