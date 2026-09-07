@@ -33,6 +33,7 @@ import timber.log.Timber
 class WeatherNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
     private val clock: Clock,
+    private val alertChannel: WeatherAlertChannel,
 ) {
 
     /**
@@ -67,7 +68,7 @@ class WeatherNotifier @Inject constructor(
         ensureChannel()
 
         val notification = NotificationCompat.Builder(context, Constants.WEATHER_ALERT_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setSmallIcon(R.drawable.ic_notification_weather)
             .setContentTitle(titleFor(alert))
             .setContentText(context.getString(R.string.weather_alert_body, alert.regionName))
             .setStyle(
@@ -94,26 +95,18 @@ class WeatherNotifier @Inject constructor(
     }
 
     /**
-     * Channel dibuat ulang setiap kali, bukan sekali saat startup.
+     * Channel dipastikan ada setiap kali, bukan hanya sekali saat startup.
      *
      * `createNotificationChannel` bersifat idempoten, dan memanggilnya di sini
      * berarti channel-nya pasti ada tepat ketika dibutuhkan — tanpa
      * bergantung pada urutan inisialisasi Application yang bisa berubah.
+     *
+     * Sejak Fase 9 isinya tinggal di [WeatherAlertChannel] supaya
+     * `AgriBicaraApp` bisa memanggilnya juga saat startup, sehingga petani bisa
+     * mengatur channel-nya SEBELUM peringatan pertama muncul. Pemanggilan di
+     * sini TETAP ADA dan jangan dihapus — itu yang menjaga jaminan di atas.
      */
-    private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-
-        val channel = NotificationChannel(
-            Constants.WEATHER_ALERT_CHANNEL_ID,
-            context.getString(R.string.weather_alert_channel_name),
-            NotificationManager.IMPORTANCE_HIGH,
-        ).apply {
-            description = context.getString(R.string.weather_alert_channel_description)
-        }
-
-        context.getSystemService(NotificationManager::class.java)
-            ?.createNotificationChannel(channel)
-    }
+    private fun ensureChannel() = alertChannel.ensure()
 
     private fun titleFor(alert: WeatherAlert): String {
         val titleRes = when (alert.reason) {

@@ -44,6 +44,9 @@ class FirebaseTextGenerator @Inject constructor() : AiTextGenerator {
                 // Tanpa ini SDK memakai bawaannya, 180 detik. Lihat
                 // Constants.AI_TIMEOUT_MS untuk alasan lengkapnya.
                 requestOptions = aiRequestOptions(),
+                // Batas 3 kalimat hanya DIMINTA lewat prompt dan bisa
+                // diabaikan. Lihat Constants.AI_MAX_OUTPUT_TOKENS.
+                generationConfig = aiGenerationConfig(),
             )
     }
 

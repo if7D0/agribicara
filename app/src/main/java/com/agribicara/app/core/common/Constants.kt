@@ -99,6 +99,22 @@ object Constants {
     const val AI_MAX_SENTENCES = 3
 
     /**
+     * Jaring pengaman panjang jawaban, DI SISI MODEL.
+     *
+     * [AI_MAX_SENTENCES] hanya diminta lewat prompt, dan permintaan bisa
+     * diabaikan. Ketika itu terjadi, TTS membacakan jawaban panjang sampai
+     * habis tanpa tombol berhenti — petani menunggu tanpa bisa menyela.
+     *
+     * 300, bukan angka yang pas-pasan. Tiga kalimat Bahasa Indonesia yang wajar
+     * berkisar 60-80 kata; dengan ~2 token per kata, itu sekitar 160 token.
+     * Batas ini memberi ruang gerak dua kali lipat DENGAN SENGAJA: memotong
+     * jawaban yang berperilaku baik di tengah kalimat jauh lebih buruk daripada
+     * membiarkan jawaban nakal sedikit lebih panjang. Ini pengaman terhadap
+     * kasus liar, bukan alat penegak gaya bahasa.
+     */
+    const val AI_MAX_OUTPUT_TOKENS = 300
+
+    /**
      * Batas panjang pertanyaan yang diteruskan ke model.
      *
      * Ucapan manusia yang wajar jauh di bawah ini — satu kalimat pertanyaan
@@ -112,8 +128,38 @@ object Constants {
      */
     const val AI_MAX_QUESTION_CHARS = 500
 
+    /**
+     * Ditempelkan ke pertanyaan yang benar-benar dipotong [AI_MAX_QUESTION_CHARS].
+     *
+     * Tanpa ini pemotongan bersifat senyap: model menerima separuh kalimat dan
+     * menjawabnya seolah pertanyaan utuh. Jawaban atas pertanyaan yang bukan
+     * pertanyaan petani jauh lebih menyesatkan daripada jawaban yang mengakui
+     * pertanyaannya terpotong.
+     *
+     * Berbahasa Indonesia karena seluruh prompt berbahasa Indonesia;
+     * menyisipkan penanda berbahasa Inggris justru menarik model keluar dari
+     * bahasa jawabannya. Sengaja TIDAK memakai `<<<`/`>>>` — keduanya dibuang
+     * oleh sanitasi pertanyaan, sehingga penandanya akan lenyap.
+     */
+    const val QUESTION_TRUNCATED_MARKER = " … (pertanyaan dipotong karena terlalu panjang)"
+
     /** Berapa kali panggilan AI diulang setelah kegagalan sesaat. */
     const val AI_RETRY_COUNT = 1
+
+    /**
+     * Kedalaman maksimum rantai `cause` yang ditelusuri saat memilih pesan.
+     *
+     * Tanpa batas ini, `generateSequence(failure) { it.cause }` berputar
+     * SELAMANYA pada rantai siklik — A.cause = B, B.cause = A. Itu bukan
+     * kemustahilan teoretis: exception yang dibungkus ulang oleh dua lapisan
+     * yang saling membungkus menghasilkannya, dan akibatnya bukan pesan yang
+     * keliru melainkan aplikasi yang menggantung di dalam penanganan kegagalan
+     * — kegagalan di dalam kegagalan, tempat paling buruk untuk hang.
+     *
+     * Sepuluh jauh di atas kedalaman mana pun yang pernah terlihat di proyek
+     * ini (terdalam: SDK membungkus IOException, dua tingkat).
+     */
+    const val AI_CAUSE_CHAIN_LIMIT = 10
 
     /**
      * Batas tunggu satu panggilan AI.

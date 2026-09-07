@@ -238,6 +238,13 @@ kover {
                     "com.agribicara.app.data.notification.WeatherNotifier",
                     "com.agribicara.app.data.notification.WeatherNotifier$*",
 
+                    // Fase 9. Hanya membangun NotificationChannel lalu
+                    // menyerahkannya ke NotificationManager — tidak ada
+                    // keputusan di dalamnya, dan keduanya tidak bisa dijalankan
+                    // di JVM. Sebaris alasannya dengan WeatherNotifier di atas.
+                    "com.agribicara.app.data.notification.WeatherAlertChannel",
+                    "com.agribicara.app.data.notification.WeatherAlertChannel$*",
+
                     // Wrapper SpeechRecognizer dan TextToSpeech milik Android.
                     // Kebijakannya sudah diangkat keluar ke SpeechErrorMapper
                     // dan TtsLanguageStatus, dan KEDUANYA punya unit test.
