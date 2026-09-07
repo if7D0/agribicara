@@ -5,6 +5,7 @@ import com.agribicara.app.R
 import com.agribicara.app.core.common.Constants
 import com.agribicara.app.core.common.DispatcherProvider
 import com.agribicara.app.core.common.NetworkResult
+import com.agribicara.app.di.IsDebugBuild
 import com.agribicara.app.domain.repository.AiRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
@@ -32,6 +33,7 @@ class FirebaseAiRepository @Inject constructor(
     private val generator: AiTextGenerator,
     private val dispatchers: DispatcherProvider,
     @ApplicationContext private val context: Context,
+    @IsDebugBuild private val isDebugBuild: Boolean,
 ) : AiRepository {
 
     override suspend fun ask(prompt: String): NetworkResult<String> =
@@ -78,11 +80,25 @@ class FirebaseAiRepository @Inject constructor(
      * Menyamakan ketiganya membuat pesan jadi tidak berguna — pelajaran yang
      * sama dengan SpeechErrorMapper di Fase 3, yang juga memisahkan timeout
      * dari tidak-tersambung.
+     *
+     * Penolakan App Check adalah PENGECUALIAN yang hanya berlaku di build
+     * debug. Bagi petani ia memang "layanan bermasalah" dan tidak boleh
+     * berbunyi lain: ia tidak punya Firebase Console, tidak tahu apa itu
+     * token, dan menyebutnya hanya membuat pesan menakutkan tanpa memberi
+     * jalan keluar. Bagi developer ia justru satu-satunya kegagalan di sini
+     * yang penyebabnya SETELAN, bukan kode — dan menyamarkannya sebagai
+     * gangguan server sudah pernah menghabiskan satu sesi penuh perburuan
+     * pada fitur yang sebenarnya utuh.
      */
     private fun messageFor(failure: Throwable?): String {
         val chain = generateSequence(failure) { it.cause }.toList()
         val messageRes = when {
             chain.any { it is AiTimeoutException } -> R.string.error_ai_timeout
+            // Sebelum cabang IOException: penolakan App Check bisa datang
+            // terbungkus kegagalan jaringan saat token gagal ditukar, dan
+            // "tidak ada internet" adalah diagnosis yang menyesatkan.
+            isDebugBuild && chain.any { it is AiAppCheckException } ->
+                R.string.error_ai_app_check_debug
             chain.any { it is IOException } -> R.string.error_ai_offline
             else -> R.string.error_ai_unavailable
         }

@@ -123,6 +123,13 @@
     <string name="error_ai_timeout">Sambungan terlalu lambat, jawabannya belum sampai. Coba tanya lagi, atau lihat cuaca yang tersimpan.</string>
     <string name="error_ai_blocked">Maaf, pertanyaan itu belum bisa dijawab. Coba tanyakan dengan kalimat lain.</string>
     <string name="error_ai_empty_question">Pertanyaannya masih kosong.</string>
+    <!--
+      HANYA muncul di build debug; petani tidak pernah membacanya. Sengaja
+      kasar dan penuh instruksi, bukan ramah — pembacanya adalah developer yang
+      sedang menatap fitur yang tampak mati. translatable="false" karena ini
+      pesan perkakas, bukan bagian antarmuka.
+    -->
+    <string name="error_ai_app_check_debug" translatable="false">DEBUG: App Check menolak permintaan. Debug token perangkat ini belum terdaftar. Ambil token dari logcat (tag DebugAppCheckProvider) lalu daftarkan di Firebase Console → App Check → Manage debug tokens.</string>
 
     <!-- Fase 6: notifikasi cuaca ekstrem. Kalimatnya menyebut APA dan KAPAN,
          karena petani perlu memutuskan tindakan, bukan sekadar diberi tahu. -->
