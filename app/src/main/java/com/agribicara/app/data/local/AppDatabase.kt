@@ -3,11 +3,13 @@ package com.agribicara.app.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.agribicara.app.data.local.dao.ChatMessageDao
+import com.agribicara.app.data.local.dao.DetectionDao
 import com.agribicara.app.data.local.dao.RegionCacheDao
 import com.agribicara.app.data.local.dao.SentAlertDao
 import com.agribicara.app.data.local.dao.UserPreferenceDao
 import com.agribicara.app.data.local.dao.WeatherCacheDao
 import com.agribicara.app.data.local.entity.ChatMessageEntity
+import com.agribicara.app.data.local.entity.DetectionEntity
 import com.agribicara.app.data.local.entity.RegionCacheEntity
 import com.agribicara.app.data.local.entity.SentAlertEntity
 import com.agribicara.app.data.local.entity.UserPreferenceEntity
@@ -20,9 +22,9 @@ import com.agribicara.app.data.local.entity.WeatherCacheEntity
  * v2 (Fase 2): cache cuaca + cache wilayah.
  * v3 (Fase 5): riwayat percakapan.
  * v4 (Fase 6): peringatan cuaca terakhir yang sudah ditampilkan.
+ * v5 (Fase 4): riwayat deteksi penyakit padi.
  *
- * Riwayat deteksi penyakit (Fase 4) menyusul —
- * setiap penambahan menaikkan [version] dan WAJIB disertai migrasi eksplisit
+ * Setiap penambahan menaikkan [version] dan WAJIB disertai migrasi eksplisit
  * di `data/local/migration/Migrations.kt` plus test migrasinya. Schema
  * di-export ke app/schemas dan di-commit.
  */
@@ -33,8 +35,9 @@ import com.agribicara.app.data.local.entity.WeatherCacheEntity
         RegionCacheEntity::class,
         ChatMessageEntity::class,
         SentAlertEntity::class,
+        DetectionEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -43,4 +46,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun regionCacheDao(): RegionCacheDao
     abstract fun chatMessageDao(): ChatMessageDao
     abstract fun sentAlertDao(): SentAlertDao
+    abstract fun detectionDao(): DetectionDao
 }

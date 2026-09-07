@@ -7,6 +7,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.agribicara.app.data.local.migration.MIGRATION_1_2
 import com.agribicara.app.data.local.migration.MIGRATION_2_3
 import com.agribicara.app.data.local.migration.MIGRATION_3_4
+import com.agribicara.app.data.local.migration.MIGRATION_4_5
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -259,6 +260,74 @@ class MigrationTest {
         val db = helper.runMigrationsAndValidate(TEST_DB, 4, true, MIGRATION_3_4)
 
         db.query("SELECT COUNT(*) FROM sent_alert").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun migrasi4Ke5MempertahankanSeluruhDataLama() {
+        // Deteksi penyakit (Fase 4) menambah satu tabel. Preferensi, cache
+        // cuaca/wilayah, riwayat percakapan, dan catatan peringatan harus lolos
+        // tanpa tergores.
+        helper.createDatabase(TEST_DB, 4).use { db ->
+            db.execSQL(
+                "INSERT INTO user_preference " +
+                    "(id, isOnboardingCompleted, regionCode, regionName, latitude, longitude) " +
+                    "VALUES (1, 1, '11.01.01.2001', 'Keude Bakongan', 3.0, 97.4)",
+            )
+            db.execSQL(
+                "INSERT INTO chat_message (role, text, questionKey, regionCode, createdAt) " +
+                    "VALUES ('ASSISTANT', 'Pupuk sebaiknya Sabtu pagi.', 'kapan memupuk padi', " +
+                    "'11.01.01.2001', 1700000000000)",
+            )
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 5, true, MIGRATION_4_5)
+
+        db.query("SELECT regionName FROM user_preference WHERE id = 1").use { cursor ->
+            assertTrue("Preferensi hilang setelah migrasi", cursor.moveToFirst())
+            assertEquals("Keude Bakongan", cursor.getString(0))
+        }
+        db.query("SELECT COUNT(*) FROM chat_message").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun migrasi4Ke5MembuatTabelDeteksiYangBisaDitulis() {
+        helper.createDatabase(TEST_DB, 4).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 5, true, MIGRATION_4_5)
+
+        db.execSQL(
+            "INSERT INTO disease_detection (outcomeType, label, confidence, createdAt) " +
+                "VALUES ('DIAGNOSED', 'blast', 0.9, 1700000000000)",
+        )
+        // label boleh NULL untuk hasil UNSURE.
+        db.execSQL(
+            "INSERT INTO disease_detection (outcomeType, label, confidence, createdAt) " +
+                "VALUES ('UNSURE', NULL, 0.3, 1700000000001)",
+        )
+
+        db.query("SELECT COUNT(*) FROM disease_detection").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(2, cursor.getInt(0))
+        }
+        // id auto-generate: dua baris tetap dua baris, bukan saling menimpa.
+        db.query("SELECT DISTINCT id FROM disease_detection").use { cursor ->
+            assertEquals(2, cursor.count)
+        }
+    }
+
+    @Test
+    fun migrasi4Ke5AmanPadaDatabaseKosong() {
+        helper.createDatabase(TEST_DB, 4).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 5, true, MIGRATION_4_5)
+
+        db.query("SELECT COUNT(*) FROM disease_detection").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }
