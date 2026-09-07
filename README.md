@@ -4,20 +4,28 @@ Asisten pertanian berbasis suara untuk petani kecil di Indonesia. Petani menekan
 tombol mikrofon, bertanya dalam Bahasa Indonesia, dan menerima jawaban lisan yang
 dihasilkan AI berdasarkan data cuaca hiperlokal BMKG.
 
-Status saat ini: **Fase 8 — Launch Preparation** (berjalan). Fase 1, 2, 3, 5, 6,
-dan 7 selesai dan ada di `master`. Lihat `.claude/PRPs/prds/agribicara.prd.md`
-untuk peta fase.
+Status saat ini: **Fase 8 — Launch Preparation** (berjalan). Fase 1–7 dan 9
+selesai dan ada di `master`. Lihat `.claude/PRPs/prds/agribicara.prd.md` untuk
+peta fase.
 
-**Deteksi penyakit tanaman TIDAK ada di aplikasi ini.** Fase 4 berstatus
-`blocked`: spike 2026-08-30 membuktikan PlantVillage tidak memuat padi sama
-sekali, dan model berbasis dataset itu turun ke ~31% saat diuji di luar dataset
-latihnya. Diagnosis keliru yang terlihat yakin berisiko membuat petani membeli
-pestisida yang salah. Bagian ini dihapus dari deskripsi di atas karena README
-sebelumnya menjanjikannya seolah sudah ada.
+Fase 8 tetap berjalan bukan karena ada kode tersisa — seluruh task kodenya sudah
+di-merge. Sisanya bukan kode sama sekali: akun Play Console, SHA-256 App Check,
+rekrutmen beta, uji perangkat low-end, dan aksen daerah STT, semuanya di
+[`docs/play/release-checklist.md`](docs/play/release-checklist.md).
 
-Yang BELUM terbukti dan sengaja dicatat terbuka: notifikasi cuaca ekstrem belum
-pernah muncul di layar, TalkBack belum pernah dinyalakan, dan aplikasi belum
-pernah diuji di perangkat low-end sungguhan (Android 7 / RAM 2GB).
+**Deteksi penyakit padi SUDAH ada** sejak Fase 4 (2026-09-08). README ini
+sebelumnya menyatakan sebaliknya, dan itu benar pada zamannya: spike 2026-08-30
+membuktikan PlantVillage tidak memuat padi sama sekali. Datasetnya diganti
+**Paddy Doctor** (Apache 2.0, 10 kelas padi), model MobileNetV3-Small dibundel di
+`app/src/main/assets/` dan berjalan sepenuhnya offline.
+
+Yang BELUM terbukti dan sengaja dicatat terbuka:
+
+- **0.862 adalah akurasi validasi, bukan lapangan.** Daun blas kasat mata pada
+  foto uji hanya mencapai 0.6439 — jarak dataset↔sawah sungguhan sudah terukur.
+- TalkBack belum pernah dinyalakan.
+- Aplikasi belum pernah diuji di perangkat low-end sungguhan (Android 7 / RAM 2GB).
+- Jalur kamera langsung ("Ambil foto") belum diuji; semua uji lewat galeri.
 
 ## Syarat Build
 
