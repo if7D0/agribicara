@@ -205,4 +205,94 @@ object Constants {
 
     /** Nama pekerjaan periodik; dipakai untuk enqueueUniquePeriodicWork. */
     const val WEATHER_CHECK_WORK_NAME = "weather_check"
+
+    // --- Fase 4: deteksi penyakit padi -------------------------------------
+
+    /**
+     * Berkas model TFLite yang DIBUNDEL di assets aplikasi.
+     *
+     * Firebase ML Model Hosting (rencana awal) sudah deprecated (shutdown Juni
+     * 2027) dan UI unggahnya dihapus dari Console, jadi model di-bundel langsung
+     * di `app/src/main/assets/` dan dimuat on-device — tanpa jaringan, tanpa
+     * backend. Dihasilkan di Task 0 (lihat `ml/`). Bila berkas tidak ada,
+     * classifier melempar dan aplikasi menampilkan "model belum tersedia".
+     */
+    const val DISEASE_MODEL_ASSET = "rice_disease_classifier.tflite"
+
+    /**
+     * Berkas label di assets, satu label per baris, URUTANNYA harus sama dengan
+     * urutan output model. Dihasilkan bersama model di Task 0. Bila berkas tidak
+     * ada, classifier melempar dan repository memetakannya ke pesan "model belum
+     * tersedia" — BUKAN menebak label.
+     */
+    const val DISEASE_LABELS_ASSET = "disease_labels.txt"
+
+    /**
+     * Atribusi dataset Paddy Doctor, dibundel sebagai aset.
+     *
+     * Salinan VERBATIM dari `ml/NOTICE`, bukan teks yang ditulis ulang di
+     * `strings.xml`. Lisensi Apache 2.0 dataset mewajibkan atribusi ikut
+     * disertakan pada distribusi aplikasi, dan kewajiban seperti itu tidak boleh
+     * bergantung pada seseorang mengingat untuk menyalin ulang secara manual.
+     *
+     * `LicenseNoticeInvariantTest` memerahkan build bila aset ini menyimpang
+     * dari `ml/NOTICE`, dan `app/build.gradle.kts` mendaftarkan kedua berkas
+     * sebagai input task test supaya penjaganya tidak dilewati diam-diam oleh
+     * pemeriksaan up-to-date Gradle.
+     */
+    const val LICENSE_NOTICE_ASSET = "paddy_doctor_notice.txt"
+
+    /**
+     * Sisi input model (piksel). 224 adalah lazim untuk MobileNet/EfficientNet-Lite.
+     * WAJIB cocok dengan model hasil Task 0; bila model dilatih pada ukuran lain,
+     * cukup ubah baris ini.
+     */
+    const val DISEASE_MODEL_INPUT_SIZE = 224
+
+    /**
+     * Normalisasi piksel sebelum inferensi: (piksel - MEAN) / STD.
+     *
+     * MEAN 0, STD 1 → mengirim piksel MENTAH [0..255] apa adanya. Ini WAJIB
+     * cocok dengan pipeline pelatihan `ml/train.py`, yang memakai MobileNetV3
+     * dengan `include_preprocessing=True` — model itu melakukan normalisasinya
+     * sendiri dari input [0..255]. Salah normalisasi (mis. mengirim [0..1] ke
+     * model yang menunggu [0..255]) menghasilkan prediksi yang terlihat yakin
+     * tapi ngawur — persis bahaya yang dijaga gerbang keyakinan. Bila kelak
+     * modelnya dilatih dengan pra-proses berbeda, ubah dua baris ini agar cocok.
+     */
+    const val DISEASE_INPUT_MEAN = 0f
+    const val DISEASE_INPUT_STD = 1f
+
+    /**
+     * Ambang keyakinan minimum agar sebuah prediksi ditampilkan sebagai dugaan.
+     *
+     * Di bawah ini hasilnya "belum yakin", BUKAN diagnosis. Ini inti pengaman
+     * fase ini: model closed-set akan memaksa satu label untuk foto apa pun
+     * (daun sehat, penyakit di luar kelas, tangan, foto buram), dan diagnosis
+     * yakin-tapi-salah bisa membuat petani salah bertindak.
+     *
+     * DIUKUR, bukan ditebak. Dari tabel kalibrasi `ml/train.py` pada model
+     * val_accuracy 0.862 (dataset validasi Paddy Doctor):
+     *
+     *   ambang   foto dapat dugaan   dugaan itu benar
+     *     0.55         91.2%              90.4%
+     *     0.60         88.5%              91.7%   <- dipakai
+     *     0.65         85.8%              92.9%
+     *     0.70         83.0%              93.9%
+     *     0.80         75.2%              96.2%
+     *
+     * Skrip merekomendasikan 0.55 (ambang terendah yang masih 90%), tetapi itu
+     * tidak menyisakan cadangan: foto HP sungguhan skornya di bawah foto
+     * validasi. Buktinya foto uji daun blas yang jelas hanya mendapat 0.6439 —
+     * label BENAR, tapi tertolak ambang 0.70 maupun 0.65. 0.60 adalah ambang
+     * paling ketat yang masih menerima kasus lapangan seperti itu, sambil
+     * menahan ketepatan di 91.7% dan tetap lebih ketat dari saran skrip.
+     *
+     * Kalau model diganti, JALANKAN ULANG kalibrasi — angka ini milik model
+     * tertentu, bukan konstanta universal.
+     */
+    const val DISEASE_CONFIDENCE_THRESHOLD = 0.60f
+
+    /** Batas baris riwayat deteksi yang diobservasi UI dan disimpan. */
+    const val DETECTION_HISTORY_LIMIT = 50
 }

@@ -123,6 +123,13 @@
     <string name="error_ai_timeout">Sambungan terlalu lambat, jawabannya belum sampai. Coba tanya lagi, atau lihat cuaca yang tersimpan.</string>
     <string name="error_ai_blocked">Maaf, pertanyaan itu belum bisa dijawab. Coba tanyakan dengan kalimat lain.</string>
     <string name="error_ai_empty_question">Pertanyaannya masih kosong.</string>
+    <!--
+      HANYA muncul di build debug; petani tidak pernah membacanya. Sengaja
+      kasar dan penuh instruksi, bukan ramah — pembacanya adalah developer yang
+      sedang menatap fitur yang tampak mati. translatable="false" karena ini
+      pesan perkakas, bukan bagian antarmuka.
+    -->
+    <string name="error_ai_app_check_debug" translatable="false">DEBUG: App Check menolak permintaan. Debug token perangkat ini belum terdaftar. Ambil token dari logcat (tag DebugAppCheckProvider) lalu daftarkan di Firebase Console → App Check → Manage debug tokens.</string>
 
     <!-- Fase 6: notifikasi cuaca ekstrem. Kalimatnya menyebut APA dan KAPAN,
          karena petani perlu memutuskan tindakan, bukan sekadar diberi tahu. -->
@@ -133,4 +140,39 @@
     <string name="weather_alert_body">Di %1$s. Ketuk untuk melihat prakiraan selengkapnya.</string>
     <string name="weather_alert_today">hari ini</string>
     <string name="weather_alert_tomorrow">besok</string>
+
+    <!-- Fase 4: deteksi penyakit padi. Bahasa sederhana; hasil selalu disebut
+         "dugaan", bukan diagnosis pasti — sikap yang sama dengan Fase 5. -->
+    <string name="detection_home_button">Cek penyakit daun</string>
+    <string name="detection_title">Cek Penyakit Daun</string>
+    <string name="detection_guidance">Foto SATU daun padi dari dekat, di atas latar polos, dengan cahaya cukup. Hasilnya jadi lebih tepat.</string>
+    <string name="detection_take_photo">Ambil foto</string>
+    <string name="detection_pick_gallery">Pilih dari galeri</string>
+    <string name="detection_analyzing">Sedang memeriksa foto…</string>
+    <string name="detection_retake">Foto lagi</string>
+    <string name="detection_disclaimer">Ini dugaan awal dari foto, bukan diagnosis pasti.</string>
+    <string name="detection_diagnosed_label">Dugaan penyakit</string>
+    <string name="detection_confidence">Keyakinan %1$d%%</string>
+    <string name="detection_healthy_title">Daun tampak sehat</string>
+    <string name="detection_healthy_body">Tidak terlihat tanda penyakit dari foto ini. Tetap pantau tanaman Anda secara berkala.</string>
+    <string name="detection_unsure_title">Belum yakin dari foto ini</string>
+    <string name="detection_unsure_body">Coba foto ulang: satu daun padi saja, latar polos, cahaya cukup, dan fokus yang jelas.</string>
+
+    <!-- Kegagalan deteksi. "Model belum tersedia" dipisah dari kegagalan umum
+         karena tindakannya berbeda: butuh internet SEKALI untuk mengunduh model. -->
+    <string name="error_detection_model_unavailable">Fitur pemeriksa penyakit belum tersedia di versi aplikasi ini.</string>
+    <string name="error_detection_failed">Foto belum bisa diperiksa. Coba lagi dengan foto yang lebih jelas.</string>
+
+    <!-- Tentang & Lisensi. WAJIB ada sebelum rilis publik: dataset Paddy Doctor
+         berlisensi Apache 2.0 dan menuntut atribusinya disertakan. Isi
+         atribusinya sendiri TIDAK ada di sini melainkan dibaca dari aset, agar
+         tidak menyimpang dari ml/NOTICE. -->
+    <string name="license_home_button">Tentang &amp; Lisensi</string>
+    <string name="license_title">Tentang &amp; Lisensi</string>
+    <string name="license_app_version">AgriBicara versi %1$s</string>
+    <string name="license_data_sources_title">Sumber data</string>
+    <string name="license_data_sources_body">Prakiraan cuaca dari BMKG, dengan Open-Meteo sebagai cadangan. Daftar wilayah dari wilayah.id.</string>
+    <string name="license_model_title">Model deteksi penyakit</string>
+    <string name="license_model_intro">Model pemeriksa penyakit daun dilatih memakai dataset berikut. Kutipan aslinya disertakan apa adanya sesuai ketentuan lisensinya.</string>
+    <string name="license_notice_unavailable">Teks atribusi belum bisa ditampilkan. Isinya juga tersedia di berkas NOTICE pada kode sumber aplikasi.</string>
 </resources>

@@ -52,6 +52,31 @@ akan gagal total.
    rahasia lokal proyek ini sekarang adalah material penandatanganan rilis, dan
    itu tinggal di `keystore.properties`, bukan di sini.
 
+4. **Daftarkan debug token App Check — wajib, sekali per perangkat uji.**
+
+   Tanpa langkah ini fitur tanya-jawab AI **mati total** di build debug: App
+   Check menolak setiap panggilan Gemini, dan layar hanya menampilkan pesan
+   kegagalan. Build tetap sukses, seluruh test tetap hijau, dan tidak ada satu
+   pun pemeriksaan otomatis yang bisa menangkapnya.
+
+   ```bash
+   adb logcat -d | grep DebugAppCheckProvider
+   ```
+
+   Salin UUID yang tercetak, lalu daftarkan di **Firebase Console → App Check →
+   aplikasi Android → ⋮ → Manage debug tokens**.
+
+   Token disimpan di `shared_prefs` aplikasi, jadi ia bertahan melewati
+   `adb install -r` tetapi **hilang bila data aplikasi dibersihkan atau
+   aplikasi di-uninstall** — saat itu terbitlah token baru yang harus
+   didaftarkan lagi. Gejalanya menipu: fitur yang kemarin bekerja tiba-tiba
+   mati tanpa ada kode yang berubah.
+
+   Sejak perbaikan 2026-09-08, build debug menyebut penyebab ini terang-terangan
+   di layar. Build rilis tidak, dan memang tidak boleh: petani tidak punya
+   Firebase Console. Rilis memakai Play Integrity yang bekerja otomatis tanpa
+   token apa pun — **petani tidak pernah mendaftarkan apa-apa.**
+
 ## Perintah
 
 ```bash

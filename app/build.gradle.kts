@@ -121,6 +121,24 @@ ksp {
 }
 
 /**
+ * Berkas yang dibaca LicenseNoticeInvariantTest lewat jalur filesystem, bukan
+ * classpath, sehingga Gradle tidak bisa menemukannya sendiri.
+ *
+ * Tanpa deklarasi ini task test dianggap up-to-date ketika `ml/NOTICE` atau
+ * aset atribusinya berubah, dan penjaga lisensi itu dilewati DIAM-DIAM persis
+ * pada saat ia dibutuhkan. Diverifikasi: mengubah aset tanpa baris ini tidak
+ * memerahkan apa pun sampai `--rerun-tasks` dipaksakan.
+ */
+tasks.withType<Test>().configureEach {
+    inputs.file(rootProject.file("ml/NOTICE"))
+        .withPropertyName("mlNotice")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("src/main/assets/paddy_doctor_notice.txt"))
+        .withPropertyName("paddyDoctorNoticeAsset")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+/**
  * Coverage host test (unit test JVM).
  *
  * Kover pada Android TIDAK menghitung instrumented test. Karena itu kelas yang
@@ -206,6 +224,14 @@ kover {
                     // kode yang paling perlu diukur.
                     "com.agribicara.app.data.logging.CrashReportingTree",
                     "com.agribicara.app.data.logging.CrashReportingTree$*",
+
+                    // Fase 4. Menyentuh SDK Firebase ML + TFLite Interpreter dan
+                    // meng-decode Uri gambar — tidak bisa dibangun di JVM. Sengaja
+                    // dangkal: seluruh kebijakan (ambang keyakinan, pemetaan label)
+                    // ada di DiseaseClassificationPolicy dan DiseaseCatalog yang
+                    // JUSTRU punya unit test dan TIDAK dikecualikan.
+                    "com.agribicara.app.data.ml.TfliteImageClassifier",
+                    "com.agribicara.app.data.ml.TfliteImageClassifier$*",
 
                     // Membungkus NotificationCompat dan PendingIntent; jalur
                     // keputusannya diuji lewat WeatherCheckWorkerTest.
@@ -317,6 +343,11 @@ dependencies {
     implementation(libs.firebase.appcheck.playintegrity)
     // Fase 8. Crash dan log WARN/ERROR dari build rilis.
     implementation(libs.firebase.crashlytics)
+    // Fase 4. Runtime TFLite (Interpreter). Model di-bundel di assets aplikasi
+    // (Firebase ML Model Hosting deprecated). Bukan diatur BoM — versi eksplisit.
+    // Pra-proses gambar dilakukan manual (Bitmap -> ByteBuffer) tanpa
+    // tensorflow-lite-support: support 0.4.4 bentrok namespace di AGP 9.
+    implementation(libs.tensorflow.lite)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)

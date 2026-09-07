@@ -129,3 +129,26 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         )
     }
 }
+
+/**
+ * v4 -> v5: riwayat deteksi penyakit padi (Fase 4).
+ *
+ * Satu tabel baru, nol tabel lama disentuh. Preferensi, cache cuaca, cache
+ * wilayah, riwayat percakapan, dan catatan peringatan semuanya selamat.
+ *
+ * SQL di bawah harus PERSIS sama dengan yang dibangkitkan Room untuk
+ * `DetectionEntity` (disalin dari app/schemas/.../5.json `createSql`). Bila
+ * tidak cocok, MigrationTest gagal dengan diff skema — itu memang gunanya.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `disease_detection` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`outcomeType` TEXT NOT NULL, " +
+                "`label` TEXT, " +
+                "`confidence` REAL NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL)",
+        )
+    }
+}

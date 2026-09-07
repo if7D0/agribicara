@@ -58,10 +58,14 @@ class FirebaseAiRepositoryTest {
         }
     }
 
-    private fun repository(generator: AiTextGenerator) = FirebaseAiRepository(
+    private fun repository(
+        generator: AiTextGenerator,
+        isDebugBuild: Boolean = true,
+    ) = FirebaseAiRepository(
         generator = generator,
         dispatchers = dispatchers,
         context = context,
+        isDebugBuild = isDebugBuild,
     )
 
     @Before
@@ -72,6 +76,7 @@ class FirebaseAiRepositoryTest {
         every { context.getString(R.string.error_ai_timeout) } returns "timeout"
         every { context.getString(R.string.error_ai_unavailable) } returns "unavailable"
         every { context.getString(R.string.error_ai_blocked) } returns "blocked"
+        every { context.getString(R.string.error_ai_app_check_debug) } returns "appcheck-debug"
     }
 
     @Test
@@ -191,6 +196,45 @@ class FirebaseAiRepositoryTest {
         assertEquals(penyebab, result.cause)
         assertEquals("unavailable", result.message)
     }
+
+    @Test
+    fun `penolakan App Check di build debug menyebut penyebabnya terang-terangan`() = runTest {
+        val generator = FakeGenerator({ throw AiAppCheckException() })
+
+        val result = repository(generator, isDebugBuild = true).ask("kapan memupuk")
+
+        // Pesan generik di sini pernah menyembunyikan fitur yang sebenarnya
+        // utuh selama satu sesi penuh; hanya SETELANNYA yang salah.
+        assertEquals("appcheck-debug", (result as NetworkResult.Error).message)
+    }
+
+    @Test
+    fun `penolakan App Check di build rilis tetap memberi pesan layanan biasa`() = runTest {
+        val generator = FakeGenerator({ throw AiAppCheckException() })
+
+        val result = repository(generator, isDebugBuild = false).ask("kapan memupuk")
+
+        // Petani tidak punya Firebase Console. Menyebut "debug token" kepadanya
+        // hanya menakutkan tanpa memberi satu pun langkah yang bisa ia ambil.
+        // Inilah cabang yang tidak akan pernah bisa diuji seandainya
+        // BuildConfig.DEBUG dibaca langsung — ia selalu true di unit test.
+        assertEquals("unavailable", (result as NetworkResult.Error).message)
+    }
+
+    @Test
+    fun `penolakan App Check yang terbungkus IOException tidak salah didiagnosis offline`() =
+        runTest {
+            // Penukaran token bisa gagal sebagai kegagalan jaringan. Kalau
+            // cabang IOException diperiksa lebih dulu, developer dikirim
+            // memburu sinyal padahal masalahnya pendaftaran token.
+            val generator = FakeGenerator({
+                throw AiAppCheckException(IOException("gagal menukar token"))
+            })
+
+            val result = repository(generator, isDebugBuild = true).ask("kapan memupuk")
+
+            assertEquals("appcheck-debug", (result as NetworkResult.Error).message)
+        }
 
     @Test
     fun `pembatalan coroutine diteruskan bukan ditelan sebagai kegagalan`() = runTest {

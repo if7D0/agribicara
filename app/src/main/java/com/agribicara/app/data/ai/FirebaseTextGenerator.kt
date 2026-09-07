@@ -3,6 +3,7 @@ package com.agribicara.app.data.ai
 import com.agribicara.app.core.common.Constants
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.FirebaseAIException
 import com.google.firebase.ai.type.GenerativeBackend
 import com.google.firebase.ai.type.RequestTimeoutException
 import javax.inject.Inject
@@ -52,6 +53,41 @@ class FirebaseTextGenerator @Inject constructor() : AiTextGenerator {
         // Diterjemahkan di sini supaya pemetaan pesan tidak perlu mengenal
         // tipe SDK. Sengaja TIDAK ditelan: pemanggil yang memutuskan apakah
         // masih pantas diulang.
+        //
+        // WAJIB sebelum FirebaseAIException: RequestTimeoutException adalah
+        // turunannya, dan blok catch Kotlin diperiksa berurutan.
         throw AiTimeoutException(e)
+    } catch (e: FirebaseAIException) {
+        if (isAppCheckRejection(e)) throw AiAppCheckException(e)
+        throw e
     }
 }
+
+/**
+ * Menebak apakah [failure] adalah penolakan App Check, dari teks pesannya.
+ *
+ * RAPUH DAN MEMANG DISENGAJA. SDK 17.16.0 tidak punya tipe exception khusus
+ * App Check — penolakannya datang sebagai `ServerException` biasa dengan pesan
+ * "Firebase App Check token is invalid.", persis sama bentuknya dengan
+ * kegagalan server lain. Teks itulah satu-satunya pembeda yang ada.
+ *
+ * Kalau pesan SDK berubah, kecocokan ini meleset dan perilakunya kembali PERSIS
+ * seperti sebelum fungsi ini ada: pesan "layanan bermasalah" yang generik. Jadi
+ * salah tebak menurunkan kualitas diagnosis, tidak pernah merusak apa pun — dan
+ * itu syarat yang membuat pencocokan serapuh ini masih pantas dipakai.
+ *
+ * Diangkat keluar dari [FirebaseTextGenerator] supaya bisa diuji: kelas itu
+ * menuntut FirebaseApp yang hidup, sedangkan fungsi ini hanya butuh sebuah
+ * [Throwable]. Alasan yang sama dengan [AiTextGenerator] itu sendiri.
+ *
+ * Menerima [Throwable], bukan `FirebaseAIException`, justru supaya bisa diuji:
+ * konstruktor `ServerException` bersifat `internal` di Kotlin sehingga tipe
+ * aslinya TIDAK bisa dibuat dari test — kendala yang sama persis dengan
+ * `RequestTimeoutException` dan alasan lahirnya [AiTimeoutException]. Tipe
+ * exception memang tidak pernah ikut menentukan hasil di sini; yang dibaca
+ * hanya rantai `message`. Penyempitan ke `FirebaseAIException` dilakukan di
+ * tempat pemanggilan, bukan di dalam fungsi ini.
+ */
+internal fun isAppCheckRejection(failure: Throwable): Boolean =
+    generateSequence(failure) { it.cause }
+        .any { it.message?.contains("app check", ignoreCase = true) == true }

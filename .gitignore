@@ -37,3 +37,13 @@ Thumbs.db
 # Bukan bagian proyek; sengaja disebut per-nama, bukan pola luas seperti
 # *.png yang bisa diam-diam menyembunyikan aset sah nanti.
 e85af62ea6cf4b0ba356485c0c7d4736.json
+
+# Kredensial & keluaran pelatihan (Fase 4) — JANGAN pernah di-commit
+kaggle.json
+API TOKEN.txt
+*.token
+serviceAccount*.json
+ml/out/
+# Abaikan .tflite di mana pun KECUALI model yang benar-benar dibundel ke aplikasi.
+*.tflite
+!app/src/main/assets/*.tflite

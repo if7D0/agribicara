@@ -84,6 +84,22 @@
           tidak ada satu pun test, lint, atau build yang menangkapnya.
           Verifikasi ada di ManifestInitializerTest.
         -->
+        <!--
+          FileProvider untuk deteksi penyakit (Fase 4). Kamera sistem menulis
+          foto ke cacheDir/detection/ lewat content Uri ini; tidak ada izin
+          CAMERA yang diminta karena ACTION_IMAGE_CAPTURE ditangani aplikasi
+          kamera, bukan aplikasi ini.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

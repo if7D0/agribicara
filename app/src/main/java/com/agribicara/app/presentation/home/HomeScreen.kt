@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,8 +28,10 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -76,6 +79,8 @@ fun HomeScreen(
     onOpenWeather: () -> Unit,
     onChooseRegion: () -> Unit,
     onOpenVoice: () -> Unit,
+    onOpenDetection: () -> Unit,
+    onOpenLicense: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -97,6 +102,8 @@ fun HomeScreen(
         onOpenWeather = onOpenWeather,
         onChooseRegion = onChooseRegion,
         onOpenVoice = onOpenVoice,
+        onOpenDetection = onOpenDetection,
+        onOpenLicense = onOpenLicense,
         modifier = modifier,
     )
 }
@@ -145,6 +152,10 @@ internal fun HomeContent(
     onOpenWeather: () -> Unit,
     onChooseRegion: () -> Unit,
     onOpenVoice: () -> Unit,
+    // Default no-op agar HomeContentTest yang sudah ada tetap kompilasi tanpa
+    // perubahan; layar sungguhan selalu mengirim aksi dari navigasi.
+    onOpenDetection: () -> Unit = {},
+    onOpenLicense: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -207,6 +218,42 @@ internal fun HomeContent(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
+
+                Spacer(modifier = Modifier.height(Dimens.SpaceLarge))
+
+                // Aksi sekunder: mikrofon tetap aksi utama layar ini. Deteksi
+                // penyakit dibuka sebagai tombol jelas, bukan FAB tersembunyi.
+                OutlinedButton(
+                    onClick = onOpenDetection,
+                    modifier = Modifier
+                        .heightIn(min = Dimens.TouchTargetMin)
+                        .testTag("detection_button"),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.CameraAlt,
+                        contentDescription = null,
+                    )
+                    Spacer(modifier = Modifier.size(Dimens.SpaceSmall))
+                    Text(text = stringResource(R.string.detection_home_button))
+                }
+            }
+
+            // Atribusi pihak ketiga WAJIB bisa dicapai dari dalam aplikasi
+            // (lisensi Apache 2.0 dataset Paddy Doctor). Ditaruh paling bawah
+            // dan sebagai TextButton, bukan tombol setara: ini kewajiban
+            // hukum, bukan sesuatu yang perlu bersaing dengan mikrofon.
+            //
+            // heightIn WAJIB — TextButton Material3 lebih pendek dari 48dp,
+            // dan TouchTargetInvariantTest memindai SEMUA node yang bisa
+            // diklik, termasuk yang ditambahkan belakangan seperti ini.
+            TextButton(
+                onClick = onOpenLicense,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .heightIn(min = Dimens.TouchTargetMin)
+                    .testTag("license_button"),
+            ) {
+                Text(text = stringResource(R.string.license_home_button))
             }
         }
     }
