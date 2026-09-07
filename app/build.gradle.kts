@@ -207,6 +207,14 @@ kover {
                     "com.agribicara.app.data.logging.CrashReportingTree",
                     "com.agribicara.app.data.logging.CrashReportingTree$*",
 
+                    // Fase 4. Menyentuh SDK Firebase ML + TFLite Interpreter dan
+                    // meng-decode Uri gambar — tidak bisa dibangun di JVM. Sengaja
+                    // dangkal: seluruh kebijakan (ambang keyakinan, pemetaan label)
+                    // ada di DiseaseClassificationPolicy dan DiseaseCatalog yang
+                    // JUSTRU punya unit test dan TIDAK dikecualikan.
+                    "com.agribicara.app.data.ml.TfliteImageClassifier",
+                    "com.agribicara.app.data.ml.TfliteImageClassifier$*",
+
                     // Membungkus NotificationCompat dan PendingIntent; jalur
                     // keputusannya diuji lewat WeatherCheckWorkerTest.
                     "com.agribicara.app.data.notification.WeatherNotifier",
@@ -317,6 +325,11 @@ dependencies {
     implementation(libs.firebase.appcheck.playintegrity)
     // Fase 8. Crash dan log WARN/ERROR dari build rilis.
     implementation(libs.firebase.crashlytics)
+    // Fase 4. Runtime TFLite (Interpreter). Model di-bundel di assets aplikasi
+    // (Firebase ML Model Hosting deprecated). Bukan diatur BoM — versi eksplisit.
+    // Pra-proses gambar dilakukan manual (Bitmap -> ByteBuffer) tanpa
+    // tensorflow-lite-support: support 0.4.4 bentrok namespace di AGP 9.
+    implementation(libs.tensorflow.lite)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
