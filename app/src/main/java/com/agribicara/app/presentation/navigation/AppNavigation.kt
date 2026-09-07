@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.agribicara.app.presentation.detection.DetectionScreen
 import com.agribicara.app.presentation.home.HomeScreen
+import com.agribicara.app.presentation.license.LicenseScreen
 import com.agribicara.app.presentation.onboarding.OnboardingScreen
 import com.agribicara.app.presentation.region.RegionPickerScreen
 import com.agribicara.app.presentation.voice.VoiceScreen
@@ -71,6 +72,9 @@ fun AppNavigation(
                 onOpenDetection = {
                     navController.navigate(Route.DETECTION) { launchSingleTop = true }
                 },
+                onOpenLicense = {
+                    navController.navigate(Route.LICENSE) { launchSingleTop = true }
+                },
             )
         }
 
@@ -97,6 +101,11 @@ fun AppNavigation(
         // HOME, sama seperti VOICE.
         composable(Route.DETECTION) {
             DetectionScreen()
+        }
+
+        // Sama seperti DETECTION: selalu di atas HOME, back-nya alami.
+        composable(Route.LICENSE) {
+            LicenseScreen()
         }
     }
 }

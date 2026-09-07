@@ -20,4 +20,5 @@ object Route {
     const val REGION_PICKER = "region_picker"
     const val VOICE = "voice"
     const val DETECTION = "detection"
+    const val LICENSE = "license"
 }

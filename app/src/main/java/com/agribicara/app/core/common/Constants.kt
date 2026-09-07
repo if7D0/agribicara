@@ -228,6 +228,21 @@ object Constants {
     const val DISEASE_LABELS_ASSET = "disease_labels.txt"
 
     /**
+     * Atribusi dataset Paddy Doctor, dibundel sebagai aset.
+     *
+     * Salinan VERBATIM dari `ml/NOTICE`, bukan teks yang ditulis ulang di
+     * `strings.xml`. Lisensi Apache 2.0 dataset mewajibkan atribusi ikut
+     * disertakan pada distribusi aplikasi, dan kewajiban seperti itu tidak boleh
+     * bergantung pada seseorang mengingat untuk menyalin ulang secara manual.
+     *
+     * `LicenseNoticeInvariantTest` memerahkan build bila aset ini menyimpang
+     * dari `ml/NOTICE`, dan `app/build.gradle.kts` mendaftarkan kedua berkas
+     * sebagai input task test supaya penjaganya tidak dilewati diam-diam oleh
+     * pemeriksaan up-to-date Gradle.
+     */
+    const val LICENSE_NOTICE_ASSET = "paddy_doctor_notice.txt"
+
+    /**
      * Sisi input model (piksel). 224 adalah lazim untuk MobileNet/EfficientNet-Lite.
      * WAJIB cocok dengan model hasil Task 0; bila model dilatih pada ukuran lain,
      * cukup ubah baris ini.

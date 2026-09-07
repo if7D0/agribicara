@@ -121,6 +121,24 @@ ksp {
 }
 
 /**
+ * Berkas yang dibaca LicenseNoticeInvariantTest lewat jalur filesystem, bukan
+ * classpath, sehingga Gradle tidak bisa menemukannya sendiri.
+ *
+ * Tanpa deklarasi ini task test dianggap up-to-date ketika `ml/NOTICE` atau
+ * aset atribusinya berubah, dan penjaga lisensi itu dilewati DIAM-DIAM persis
+ * pada saat ia dibutuhkan. Diverifikasi: mengubah aset tanpa baris ini tidak
+ * memerahkan apa pun sampai `--rerun-tasks` dipaksakan.
+ */
+tasks.withType<Test>().configureEach {
+    inputs.file(rootProject.file("ml/NOTICE"))
+        .withPropertyName("mlNotice")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("src/main/assets/paddy_doctor_notice.txt"))
+        .withPropertyName("paddyDoctorNoticeAsset")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+/**
  * Coverage host test (unit test JVM).
  *
  * Kover pada Android TIDAK menghitung instrumented test. Karena itu kelas yang

@@ -163,4 +163,17 @@
          karena tindakannya berbeda: butuh internet SEKALI untuk mengunduh model. -->
     <string name="error_detection_model_unavailable">Fitur pemeriksa penyakit belum tersedia di versi aplikasi ini.</string>
     <string name="error_detection_failed">Foto belum bisa diperiksa. Coba lagi dengan foto yang lebih jelas.</string>
+
+    <!-- Tentang & Lisensi. WAJIB ada sebelum rilis publik: dataset Paddy Doctor
+         berlisensi Apache 2.0 dan menuntut atribusinya disertakan. Isi
+         atribusinya sendiri TIDAK ada di sini melainkan dibaca dari aset, agar
+         tidak menyimpang dari ml/NOTICE. -->
+    <string name="license_home_button">Tentang &amp; Lisensi</string>
+    <string name="license_title">Tentang &amp; Lisensi</string>
+    <string name="license_app_version">AgriBicara versi %1$s</string>
+    <string name="license_data_sources_title">Sumber data</string>
+    <string name="license_data_sources_body">Prakiraan cuaca dari BMKG, dengan Open-Meteo sebagai cadangan. Daftar wilayah dari wilayah.id.</string>
+    <string name="license_model_title">Model deteksi penyakit</string>
+    <string name="license_model_intro">Model pemeriksa penyakit daun dilatih memakai dataset berikut. Kutipan aslinya disertakan apa adanya sesuai ketentuan lisensinya.</string>
+    <string name="license_notice_unavailable">Teks atribusi belum bisa ditampilkan. Isinya juga tersedia di berkas NOTICE pada kode sumber aplikasi.</string>
 </resources>
