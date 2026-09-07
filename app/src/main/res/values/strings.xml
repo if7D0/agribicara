@@ -157,7 +157,6 @@
     <string name="detection_healthy_body">Tidak terlihat tanda penyakit dari foto ini. Tetap pantau tanaman Anda secara berkala.</string>
     <string name="detection_unsure_title">Belum yakin dari foto ini</string>
     <string name="detection_unsure_body">Coba foto ulang: satu daun padi saja, latar polos, cahaya cukup, dan fokus yang jelas.</string>
-    <string name="cd_detection_photo">Foto daun yang diperiksa</string>
 
     <!-- Kegagalan deteksi. "Model belum tersedia" dipisah dari kegagalan umum
          karena tindakannya berbeda: butuh internet SEKALI untuk mengunduh model. -->

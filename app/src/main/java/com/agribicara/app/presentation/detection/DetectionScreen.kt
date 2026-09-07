@@ -1,5 +1,6 @@
 package com.agribicara.app.presentation.detection
 
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -307,8 +308,22 @@ private fun SectionTitle(text: String) {
  * Membuat Uri FileProvider untuk foto kamera baru di cacheDir/detection/.
  * Authorities harus cocok dengan yang dideklarasikan di AndroidManifest.
  */
-private fun createCaptureUri(context: android.content.Context): Uri {
+private fun createCaptureUri(context: Context): Uri {
     val dir = File(context.cacheDir, "detection").apply { mkdirs() }
+
+    // Tangkapan sebelumnya dibuang lebih dulu. Tanpa ini setiap penekanan
+    // "Ambil foto" meninggalkan JPEG resolusi penuh yang TIDAK PERNAH dihapus
+    // siapa pun — Android hanya membersihkan cache saat penyimpanan sudah
+    // tertekan, dan itu terlambat bagi perangkat murah yang jadi sasaran
+    // aplikasi ini. Penyimpanan penuh juga membuat penulisan foto terputus,
+    // yang berujung pada foto gagal di-decode.
+    //
+    // Aman dilakukan di sini: layar hasil tidak menampilkan fotonya, jadi tidak
+    // ada berkas lama yang masih dibutuhkan. Membersihkan SEBELUM membuat yang
+    // baru, bukan sesudah klasifikasi, menjaga berkas yang sedang dibaca kamera
+    // atau classifier tidak ikut terhapus.
+    dir.listFiles()?.forEach { it.delete() }
+
     val file = File(dir, "capture_${System.currentTimeMillis()}.jpg")
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 }

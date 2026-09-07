@@ -7,6 +7,7 @@ import com.agribicara.app.core.common.NetworkResult
 import com.agribicara.app.data.local.dao.DetectionDao
 import com.agribicara.app.data.local.entity.DetectionEntity
 import com.agribicara.app.data.ml.ImageClassifier
+import com.agribicara.app.data.ml.ImageDecodeException
 import com.agribicara.app.data.ml.ModelUnavailableException
 import com.agribicara.app.domain.model.DetectionOutcome
 import com.agribicara.app.domain.model.DetectionOutcomeType
@@ -93,6 +94,22 @@ class DiseaseRepositoryImplTest {
 
         assertTrue(result is NetworkResult.Error)
         assertEquals("model belum ada", (result as NetworkResult.Error).message)
+    }
+
+    @Test
+    fun `gambar tak terbaca menyuruh foto ulang, BUKAN mengaku fitur tak tersedia`() = runTest {
+        // Regresi review Fase 4 (H1). Sebelumnya decode gagal dilempar sebagai
+        // ModelUnavailableException, sehingga foto rusak — hal yang lumrah bila
+        // penyimpanan penuh dan penulisan kamera terputus — dilaporkan kepada
+        // petani sebagai "Fitur pemeriksa penyakit belum tersedia di versi
+        // aplikasi ini". Salah secara fakta, dan lebih buruk lagi salah secara
+        // tindakan: pesan itu menyuruhnya berhenti memakai fitur, padahal cukup
+        // memotret ulang.
+        coEvery { classifier.classify(any()) } throws ImageDecodeException("tidak terbaca")
+
+        val result = repository.classify(uri)
+
+        assertEquals("gagal periksa", (result as NetworkResult.Error).message)
     }
 
     @Test

@@ -149,9 +149,12 @@ class TfliteImageClassifier @Inject constructor(
         }
 
         val options = BitmapFactory.Options().apply { inSampleSize = sample }
+        // ImageDecodeException, BUKAN ModelUnavailableException: yang gagal
+        // adalah FOTONYA, dan repository memetakan keduanya ke pesan yang
+        // sangat berbeda artinya bagi petani. Lihat KDoc ImageDecodeException.
         return resolver.openInputStream(imageUri).use {
             BitmapFactory.decodeStream(it, null, options)
-        } ?: throw ModelUnavailableException("Gambar tidak bisa dibaca.")
+        } ?: throw ImageDecodeException("Gambar tidak bisa dibaca.")
     }
 
     private companion object {
