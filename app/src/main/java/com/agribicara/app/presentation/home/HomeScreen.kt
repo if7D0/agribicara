@@ -95,7 +95,11 @@ fun HomeScreen(
         onPauseOrDispose { }
     }
 
-    NotificationPermissionRequest(hasRegion = !uiState.needsRegion)
+    NotificationPermissionRequest(
+        hasRegion = !uiState.needsRegion,
+        sudahDiminta = uiState.notificationPromptAsked,
+        onDiminta = viewModel::onNotificationPromptShown,
+    )
 
     HomeContent(
         uiState = uiState,
@@ -120,27 +124,40 @@ fun HomeScreen(
  * Penolakan tidak diikuti apa pun — tidak ada dialog penjelasan, tidak ada
  * permintaan ulang. Notifikasi adalah tambahan, dan memaksa tambahan hanya
  * membuat petani belajar menutup dialog tanpa membaca.
+ *
+ * [sudahDiminta] datang dari penyimpanan lewat ViewModel, BUKAN dari
+ * `rememberSaveable` seperti sebelumnya (temuan F6 L5). `rememberSaveable`
+ * bertahan terhadap rotasi dan process death, tetapi **tidak** terhadap entri
+ * navigasi yang dibuang — dan pada saat itu petani yang sudah menolak ditanya
+ * lagi. `null` berarti nilainya belum sempat dibaca, dan pada keadaan itu
+ * jangan meminta apa pun.
  */
 @Composable
-private fun NotificationPermissionRequest(hasRegion: Boolean) {
+private fun NotificationPermissionRequest(
+    hasRegion: Boolean,
+    sudahDiminta: Boolean?,
+    onDiminta: () -> Unit,
+) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
 
     val context = LocalContext.current
-    var sudahDiminta by rememberSaveable { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
     ) { /* Ditolak pun tidak ada yang berubah selain notifikasi. */ }
 
     LaunchedEffect(hasRegion, sudahDiminta) {
-        if (!hasRegion || sudahDiminta) return@LaunchedEffect
+        // sudahDiminta == null berarti penyimpanan belum menjawab. Menganggapnya
+        // "belum pernah" akan memunculkan dialog sekejap sebelum jawabannya
+        // tiba — persis kambuhnya temuan yang sedang ditutup ini.
+        if (!hasRegion || sudahDiminta != false) return@LaunchedEffect
 
         val granted = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.POST_NOTIFICATIONS,
         ) == PackageManager.PERMISSION_GRANTED
 
-        sudahDiminta = true
+        onDiminta()
         if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 }

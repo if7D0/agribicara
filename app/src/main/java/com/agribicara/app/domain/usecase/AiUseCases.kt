@@ -39,6 +39,27 @@ import timber.log.Timber
  *
  * Gagalnya cuaca TIDAK memblokir pertanyaan: banyak pertanyaan pertanian
  * (jarak tanam, tanda hama) tidak bergantung cuaca sama sekali.
+ *
+ * ## Konsekuensi riwayat yang disengaja
+ *
+ * Baris `USER` ditulis ke riwayat **sebelum** AI dipanggil, bukan sesudah
+ * berhasil. Akibatnya pertanyaan yang gagal dijawab tetap terlihat di riwayat,
+ * dan itu memang yang diinginkan: petani yang bertanya lalu gagal tetap bisa
+ * melihat bahwa ia sudah bertanya.
+ *
+ * Harganya nyata dan perlu diketahui sebelum ada yang "memperbaikinya":
+ * [Constants.CHAT_HISTORY_LIMIT] terpakai lebih cepat daripada satu baris per
+ * tanya-jawab, karena percobaan yang gagal ikut memakan kuota. Pada sinyal desa
+ * yang buruk, satu pertanyaan bisa meninggalkan beberapa baris USER tanpa satu
+ * pun jawaban.
+ *
+ * Alternatif yang DITOLAK: menulis baris USER hanya setelah AI berhasil. Itu
+ * membuat pertanyaan yang gagal lenyap sama sekali dari riwayat — petani
+ * mengingat dirinya bertanya, aplikasi bersikeras itu tidak pernah terjadi. Itu
+ * jauh lebih membingungkan daripada riwayat yang cepat penuh.
+ *
+ * Menaikkan [Constants.CHAT_HISTORY_LIMIT] BUKAN bagian dari catatan ini; itu
+ * keputusan produk yang menunggu data pemakaian nyata.
  */
 class AskAgriUseCase @Inject constructor(
     private val aiRepository: AiRepository,
@@ -145,6 +166,18 @@ class AskAgriUseCase @Inject constructor(
          * hanya demi satu string akan mencemari batas domain/data. Pesan
          * kegagalan lainnya semuanya berasal dari strings.xml lewat
          * repository.
+         *
+         * String resource untuk kasus ini SENGAJA TIDAK ADA. Dulu ada
+         * `error_ai_empty_question` di strings.xml yang tidak dipakai siapa
+         * pun — dua sumber kebenaran untuk satu kalimat, dan yang satu bisa
+         * disunting tanpa mengubah apa pun yang dibaca petani. Fase 9
+         * menghapusnya. Kalau suatu saat pesan ini perlu diterjemahkan,
+         * pindahkan validasinya, jangan menghidupkan kembali resource kembar.
+         *
+         * Alternatif yang DITOLAK: memindahkan pemeriksaan kosong ke lapisan
+         * ber-Context. Itu memindahkan aturan domain ke presentasi demi satu
+         * string, dan membuat use case ini bisa dipanggil dengan pertanyaan
+         * kosong tanpa penjaga sama sekali.
          */
         const val EMPTY_QUESTION = "Pertanyaannya masih kosong."
     }

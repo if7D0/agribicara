@@ -3,6 +3,7 @@ package com.agribicara.app.presentation.home
 import com.agribicara.app.MainDispatcherRule
 import com.agribicara.app.R
 import com.agribicara.app.core.common.NetworkResult
+import com.agribicara.app.data.local.NotificationPromptStore
 import com.agribicara.app.domain.model.DailyForecast
 import com.agribicara.app.domain.model.Forecast
 import com.agribicara.app.domain.model.Region
@@ -35,6 +36,14 @@ class HomeViewModelTest {
 
     private val getForecast = mockk<GetForecastUseCase>()
     private val observeSelectedRegion = mockk<ObserveSelectedRegionUseCase>()
+
+    /**
+     * Penanda izin notifikasi (F6 L5). Dibuat mock sederhana: perilakunya yang
+     * penting diuji di layar, bukan di sini — ViewModel hanya meneruskan.
+     */
+    private val notificationPromptStore = mockk<NotificationPromptStore>(relaxed = true).apply {
+        every { hasAsked } returns flowOf(false)
+    }
 
     private fun clockAt(hour: Int, minute: Int = 0): Clock {
         val zone = ZoneId.of("Asia/Jakarta")
@@ -87,7 +96,7 @@ class HomeViewModelTest {
     @Test
     fun `state awal memakai jam yang disuntikkan`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         withRegionAndForecast()
-        val viewModel = HomeViewModel(clockAt(16), getForecast, observeSelectedRegion)
+        val viewModel = HomeViewModel(clockAt(16), getForecast, observeSelectedRegion, notificationPromptStore)
         assertEquals(R.string.home_greeting_evening, viewModel.uiState.value.greetingRes)
     }
 
@@ -103,7 +112,7 @@ class HomeViewModelTest {
             override fun instant(): Instant = now
         }
 
-        val viewModel = HomeViewModel(movingClock, getForecast, observeSelectedRegion)
+        val viewModel = HomeViewModel(movingClock, getForecast, observeSelectedRegion, notificationPromptStore)
         assertEquals(R.string.home_greeting_morning, viewModel.uiState.value.greetingRes)
 
         now = Instant.parse("2026-08-29T12:00:00Z") // 19:00 WIB
@@ -116,7 +125,7 @@ class HomeViewModelTest {
     fun `cuaca hari ini terisi saat wilayah sudah dipilih`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         withRegionAndForecast()
 
-        val viewModel = HomeViewModel(clockAt(10), getForecast, observeSelectedRegion)
+        val viewModel = HomeViewModel(clockAt(10), getForecast, observeSelectedRegion, notificationPromptStore)
 
         val state = viewModel.uiState.value
         assertEquals("Cibeureum", state.regionName)
@@ -128,7 +137,7 @@ class HomeViewModelTest {
     fun `needsRegion true bila pengguna belum memilih wilayah`() = runTest(mainDispatcherRule.testDispatcher.scheduler) {
         every { observeSelectedRegion() } returns flowOf(null)
 
-        val viewModel = HomeViewModel(clockAt(10), getForecast, observeSelectedRegion)
+        val viewModel = HomeViewModel(clockAt(10), getForecast, observeSelectedRegion, notificationPromptStore)
 
         assertTrue(viewModel.uiState.value.needsRegion)
         assertNull(viewModel.uiState.value.today)
@@ -143,7 +152,7 @@ class HomeViewModelTest {
         )
         coEvery { getForecast(any(), any()) } returns NetworkResult.Error("gagal")
 
-        val viewModel = HomeViewModel(clockAt(10), getForecast, observeSelectedRegion)
+        val viewModel = HomeViewModel(clockAt(10), getForecast, observeSelectedRegion, notificationPromptStore)
 
         val state = viewModel.uiState.value
         assertNull(state.today)
@@ -160,7 +169,7 @@ class HomeViewModelTest {
             sampleForecast().copy(source = WeatherSource.CACHE),
         )
 
-        val viewModel = HomeViewModel(clockAt(10), getForecast, observeSelectedRegion)
+        val viewModel = HomeViewModel(clockAt(10), getForecast, observeSelectedRegion, notificationPromptStore)
 
         assertTrue(viewModel.uiState.value.isOffline)
     }

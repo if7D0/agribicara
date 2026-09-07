@@ -1,5 +1,6 @@
 package com.agribicara.app
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -23,10 +24,10 @@ class MainDispatcherRule(
 ) : TestWatcher() {
 
     override fun starting(description: Description) {
-        kotlinx.coroutines.Dispatchers.setMain(testDispatcher)
+        Dispatchers.setMain(testDispatcher)
     }
 
     override fun finished(description: Description) {
-        kotlinx.coroutines.Dispatchers.resetMain()
+        Dispatchers.resetMain()
     }
 }

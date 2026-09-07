@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.agribicara.app.R
 import com.agribicara.app.core.common.NetworkResult
+import com.agribicara.app.data.local.NotificationPromptStore
 import com.agribicara.app.domain.model.DailyForecast
 import com.agribicara.app.domain.model.Region
 import com.agribicara.app.domain.model.WeatherSource
@@ -38,6 +39,15 @@ data class HomeUiState(
     val isWeatherLoading: Boolean = false,
     /** True bila pengguna belum memilih wilayah. */
     val needsRegion: Boolean = false,
+    /**
+     * True bila dialog izin notifikasi sudah pernah ditampilkan.
+     *
+     * Null selama nilainya masih dibaca dari penyimpanan. Dibedakan dari
+     * `false` DENGAN SENGAJA: memperlakukan "belum tahu" sebagai "belum
+     * pernah" akan memunculkan dialog izin sekejap sebelum nilai sebenarnya
+     * tiba — persis kambuhnya temuan F6 L5 dalam bentuk lain.
+     */
+    val notificationPromptAsked: Boolean? = null,
 ) {
     val isOffline: Boolean get() = source == WeatherSource.CACHE
 }
@@ -47,6 +57,7 @@ class HomeViewModel @Inject constructor(
     private val clock: Clock,
     private val getForecast: GetForecastUseCase,
     private val observeSelectedRegion: ObserveSelectedRegionUseCase,
+    private val notificationPromptStore: NotificationPromptStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState(greetingRes = currentGreeting()))
@@ -68,6 +79,27 @@ class HomeViewModel @Inject constructor(
                     fetch(region)
                 }
             }
+        }
+
+        // Penanda izin notifikasi dibaca dari penyimpanan, bukan dari state
+        // Composable. Lihat NotificationPromptStore untuk alasannya (F6 L5).
+        viewModelScope.launch {
+            notificationPromptStore.hasAsked.collectLatest { asked ->
+                _uiState.update { it.copy(notificationPromptAsked = asked) }
+            }
+        }
+    }
+
+    /** Dipanggil tepat setelah dialog izin notifikasi ditampilkan. */
+    fun onNotificationPromptShown() {
+        viewModelScope.launch {
+            runCatching { notificationPromptStore.markAsked() }
+                .onFailure {
+                    // Gagal menyimpan berarti dialog bisa muncul sekali lagi
+                    // nanti — mengganggu, bukan merusak. Tidak pantas
+                    // memerahkan apa pun bagi petani.
+                    Timber.w(it, "Penanda izin notifikasi gagal disimpan")
+                }
         }
     }
 

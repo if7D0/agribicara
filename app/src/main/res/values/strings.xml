@@ -122,7 +122,6 @@
     <string name="error_ai_unavailable">Layanan jawaban sedang tidak bisa dihubungi. Coba lagi sebentar lagi.</string>
     <string name="error_ai_timeout">Sambungan terlalu lambat, jawabannya belum sampai. Coba tanya lagi, atau lihat cuaca yang tersimpan.</string>
     <string name="error_ai_blocked">Maaf, pertanyaan itu belum bisa dijawab. Coba tanyakan dengan kalimat lain.</string>
-    <string name="error_ai_empty_question">Pertanyaannya masih kosong.</string>
     <!--
       HANYA muncul di build debug; petani tidak pernah membacanya. Sengaja
       kasar dan penuh instruksi, bukan ramah — pembacanya adalah developer yang
