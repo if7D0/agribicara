@@ -1,0 +1,9 @@
+# Pipeline pelatihan model deteksi penyakit padi (Fase 4, Task 0).
+# Jalankan di Google Colab (GPU gratis) ATAU lokal. TensorFlow GPU native di
+# Windows TIDAK didukung sejak TF 2.11 — di Windows ini berjalan CPU-only;
+# pakai Colab untuk GPU.
+tensorflow>=2.16,<2.20
+numpy
+pillow
+# Untuk mengunduh dataset dari Kaggle (opsional; lihat README untuk alternatif).
+kaggle
