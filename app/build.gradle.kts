@@ -164,6 +164,15 @@ kover {
                  * kelasnya terkecualikan tetapi kelas lambda di dalamnya
                  * (misalnya ...$listener$1) tetap terhitung.
                  *
+                 * Aturan ketiga, kosmetik tetapi menular: tulis "$*" TANPA
+                 * backslash. Kotlin memperlakukan "$" yang tidak diikuti
+                 * identifier atau "{" sebagai karakter biasa, sehingga "\$*"
+                 * dan "$*" menghasilkan literal yang IDENTIK. Dulu dua gaya
+                 * hidup berdampingan di daftar ini dan pembacanya wajar
+                 * menduga ada bedanya. Diverifikasi Fase 9 dengan menjalankan
+                 * koverXmlReportDebug pada kedua bentuk: LINE missed=128
+                 * covered=1138, sama persis.
+                 *
                  * Daftar disatukan dalam satu panggilan classes() semata demi
                  * keterbacaan, BUKAN karena panggilan ganda bermasalah. Itu
                  * sempat saya kira penyebabnya dan itu KELIRU: Kover
@@ -177,9 +186,9 @@ kover {
                 classes(
                     // --- kode bangkitan, bukan tulisan manusia -------------
                     "*_Impl",
-                    "*_Impl\$*",
+                    "*_Impl$*",
                     "*_Factory",
-                    "*_Factory\$*",
+                    "*_Factory$*",
                     "*_MembersInjector",
                     "*_HiltModules*",
                     "*_GeneratedInjector",
@@ -237,6 +246,31 @@ kover {
                     // keputusannya diuji lewat WeatherCheckWorkerTest.
                     "com.agribicara.app.data.notification.WeatherNotifier",
                     "com.agribicara.app.data.notification.WeatherNotifier$*",
+
+                    // Fase 9. KELASNYA saja: delegate DataStore terikat pada
+                    // Context dan menulis berkas sungguhan, tidak bisa
+                    // dijalankan di JVM.
+                    //
+                    // `NotificationPromptStoreKt` SENGAJA TIDAK dikecualikan
+                    // lagi (temuan H1/M1 tinjauan Fase 9). Kebijakan kegagalan
+                    // baca tinggal di sana sebagai operator `tanpaGagalBaca()`
+                    // dan diuji NotificationPromptStoreTest — mengecualikannya
+                    // akan menyembunyikan justru bagian yang berperilaku.
+                    //
+                    // Pembenaran versi pertama berbunyi "yang berperilaku
+                    // adalah HomeViewModel, dan itu diuji". Itu TIDAK benar
+                    // saat ditulis: jalur ini tidak punya satu pun test sampai
+                    // tinjauan menemukannya. Sekarang punya empat di
+                    // HomeViewModelTest.
+                    "com.agribicara.app.data.local.NotificationPromptStore",
+                    "com.agribicara.app.data.local.NotificationPromptStore$*",
+
+                    // Fase 9. Hanya membangun NotificationChannel lalu
+                    // menyerahkannya ke NotificationManager — tidak ada
+                    // keputusan di dalamnya, dan keduanya tidak bisa dijalankan
+                    // di JVM. Sebaris alasannya dengan WeatherNotifier di atas.
+                    "com.agribicara.app.data.notification.WeatherAlertChannel",
+                    "com.agribicara.app.data.notification.WeatherAlertChannel$*",
 
                     // Wrapper SpeechRecognizer dan TextToSpeech milik Android.
                     // Kebijakannya sudah diangkat keluar ke SpeechErrorMapper

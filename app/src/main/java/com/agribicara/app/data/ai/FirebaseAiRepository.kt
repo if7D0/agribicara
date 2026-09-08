@@ -91,7 +91,12 @@ class FirebaseAiRepository @Inject constructor(
      * pada fitur yang sebenarnya utuh.
      */
     private fun messageFor(failure: Throwable?): String {
-        val chain = generateSequence(failure) { it.cause }.toList()
+        // .take() WAJIB sebelum .toList(). Sesudahnya, toList() sudah berputar
+        // selamanya lebih dulu pada rantai siklik — dan kedua bentuknya nyaris
+        // tidak terbedakan saat dibaca sekilas.
+        val chain = generateSequence(failure) { it.cause }
+            .take(Constants.AI_CAUSE_CHAIN_LIMIT)
+            .toList()
         val messageRes = when {
             chain.any { it is AiTimeoutException } -> R.string.error_ai_timeout
             // Sebelum cabang IOException: penolakan App Check bisa datang

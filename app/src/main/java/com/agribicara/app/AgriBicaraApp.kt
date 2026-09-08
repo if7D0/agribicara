@@ -6,6 +6,7 @@ import androidx.work.Configuration
 import com.agribicara.app.data.appcheck.AppCheckProvider
 import com.agribicara.app.data.appcheck.AppCheckProviderChoice
 import com.agribicara.app.data.logging.CrashReportingTree
+import com.agribicara.app.data.notification.WeatherAlertChannel
 import com.agribicara.app.data.worker.WeatherCheckScheduler
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
@@ -29,6 +30,9 @@ class AgriBicaraApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var weatherCheckScheduler: WeatherCheckScheduler
+
+    @Inject
+    lateinit var weatherAlertChannel: WeatherAlertChannel
 
     /**
      * WorkManager memakai konfigurasi ini, bukan bawaannya.
@@ -59,6 +63,17 @@ class AgriBicaraApp : Application(), Configuration.Provider {
         }
 
         installAppCheck()
+
+        // Channel dibuat saat startup, bukan menunggu peringatan PERTAMA
+        // muncul. Sebelum Fase 9, entri Setelan -> Notifikasi baru lahir
+        // bersama notifikasi pertama, sehingga petani hanya bisa mengatur atau
+        // membisukannya SETELAH terlanjur dikejutkan sekali. Untuk channel yang
+        // sengaja IMPORTANCE_HIGH, itu urutan yang keliru.
+        //
+        // Idempoten, dan WeatherNotifier tetap memanggilnya lagi sebelum
+        // menampilkan notifikasi — jaminan itu tidak boleh bergantung pada
+        // urutan inisialisasi di sini.
+        weatherAlertChannel.ensure()
 
         // Aman dipanggil setiap peluncuran; kebijakan KEEP menjaga jadwal yang
         // sudah berjalan agar tidak dimulai ulang.

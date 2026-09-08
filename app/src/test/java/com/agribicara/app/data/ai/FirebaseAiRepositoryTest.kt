@@ -58,6 +58,18 @@ class FirebaseAiRepositoryTest {
         }
     }
 
+    /**
+     * Exception yang `cause`-nya dihitung saat dibaca, bukan disimpan.
+     *
+     * Satu-satunya cara membentuk rantai `cause` SIKLIK dari test: konstruktor
+     * dan `initCause` masing-masing hanya bisa dipakai sekali, dan menembus
+     * field-nya dengan refleksi ditolak JPMS.
+     */
+    private class SiklikException(private val penyebab: () -> Throwable?) :
+        Exception("siklik") {
+        override val cause: Throwable? get() = penyebab()
+    }
+
     private fun repository(
         generator: AiTextGenerator,
         isDebugBuild: Boolean = true,
@@ -235,6 +247,30 @@ class FirebaseAiRepositoryTest {
 
             assertEquals("appcheck-debug", (result as NetworkResult.Error).message)
         }
+
+    @Test(timeout = 1_000)
+    fun `rantai cause siklik tidak membuat pemetaan pesan berputar selamanya`() = runTest {
+        // A.cause = B, B.cause = A. Tanpa .take(), generateSequence berputar
+        // SELAMANYA dan aplikasi menggantung di dalam penanganan kegagalan.
+        //
+        // timeout WAJIB ada di sini: tanpanya kegagalan test ini berupa build
+        // yang menggantung tanpa batas di CI, bukan test merah yang menjelaskan
+        // dirinya sendiri.
+        // Siklusnya dibuat dengan meng-override `cause`, BUKAN lewat refleksi:
+        // `Throwable.cause` hanya bisa diisi sekali lewat konstruktor/initCause,
+        // dan menembusnya dengan setAccessible ditolak JPMS
+        // ("module java.base does not opens java.lang").
+        var b: Throwable? = null
+        val a = SiklikException { b }
+        b = SiklikException { a }
+
+        val generator = FakeGenerator({ throw b as Throwable })
+
+        val result = repository(generator).ask("kapan memupuk")
+
+        // Selesai, dan pesannya tetap yang benar untuk kegagalan tak dikenal.
+        assertEquals("unavailable", (result as NetworkResult.Error).message)
+    }
 
     @Test
     fun `pembatalan coroutine diteruskan bukan ditelan sebagai kegagalan`() = runTest {

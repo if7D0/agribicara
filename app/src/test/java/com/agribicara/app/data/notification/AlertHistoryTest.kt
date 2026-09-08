@@ -144,8 +144,13 @@ class AlertHistoryTest {
         // diberi tahu tentang kejadian itu.
         coEvery { dao.get(any()) } returns tercatat(date = "2026-08-31")
 
+        // `badaiHariIni` bertanggal 2026-08-31, sama dengan yang tercatat di
+        // atas — itulah yang membuat kasus ini bermakna. Dulu fakta itu ditulis
+        // sebagai assertEquals, tetapi ia hanya memeriksa fixture milik test
+        // ini sendiri: tidak ada perubahan kode produksi yang bisa
+        // memerahkannya. Jaring pengaman palsu lebih buruk daripada tidak ada,
+        // karena ia terlihat seperti perlindungan.
         assertFalse(history.belumPernahDikirim(badaiHariIni))
-        assertEquals(LocalDate.of(2026, 8, 31), badaiHariIni.date)
     }
 
     @Test

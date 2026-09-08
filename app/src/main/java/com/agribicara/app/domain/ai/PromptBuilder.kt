@@ -95,14 +95,30 @@ object PromptBuilder {
      *    pertanyaan tidak bisa membentuk blok yang menyerupai instruksi sistem.
      * 2. Penanda blok dibuang dari isi pertanyaan, supaya tidak ada cara
      *    menutup blok lebih awal lalu menulis di luarnya.
-     * 3. Panjangnya dibatasi [Constants.AI_MAX_QUESTION_CHARS].
+     * 3. Panjangnya dibatasi [Constants.AI_MAX_QUESTION_CHARS], dan bila
+     *    benar-benar dipotong, potongannya DIBERI TAHU ke model.
+     *
+     * Sebelumnya pemotongan itu senyap: model menerima separuh kalimat dan
+     * menjawabnya seolah pertanyaan utuh. Bagi petani, jawaban atas pertanyaan
+     * yang bukan pertanyaannya jauh lebih menyesatkan daripada jawaban yang
+     * mengakui pertanyaannya terpotong.
      */
-    private fun sanitizeQuestion(question: String): String =
-        collapseWhitespace(question)
+    private fun sanitizeQuestion(question: String): String {
+        val bersih = collapseWhitespace(question)
             .replace("<<<", " ")
             .replace(">>>", " ")
             .let(::collapseWhitespace)
-            .take(Constants.AI_MAX_QUESTION_CHARS)
+
+        if (bersih.length <= Constants.AI_MAX_QUESTION_CHARS) return bersih
+
+        // Penanda ditambahkan SESUDAH take, sehingga hasilnya bisa sedikit
+        // melebihi AI_MAX_QUESTION_CHARS. Itu disengaja: batas tersebut
+        // melindungi jendela perhatian model dari teks tempelan raksasa, dan
+        // penanda sependek ini tidak mengancamnya. JANGAN "memperbaiki" dengan
+        // memperpendek potongannya — ada test yang memaku perilaku ini.
+        return bersih.take(Constants.AI_MAX_QUESTION_CHARS) +
+            Constants.QUESTION_TRUNCATED_MARKER
+    }
 
     /**
      * Aturan ditegaskan ULANG setelah pertanyaan, bukan hanya sebelumnya.
