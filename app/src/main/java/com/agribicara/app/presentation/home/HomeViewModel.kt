@@ -15,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalTime
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -95,6 +96,13 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { notificationPromptStore.markAsked() }
                 .onFailure {
+                    // Pembatalan BUKAN kegagalan. runCatching menangkap
+                    // Throwable, CancellationException termasuk, dan menelannya
+                    // memutus structured concurrency. Sikap itu sudah dipaku
+                    // test di FirebaseAiRepositoryTest; menuliskan pola yang
+                    // berlawanan di sini membuatnya berhenti menjadi sikap.
+                    if (it is CancellationException) throw it
+
                     // Gagal menyimpan berarti dialog bisa muncul sekali lagi
                     // nanti — mengganggu, bukan merusak. Tidak pantas
                     // memerahkan apa pun bagi petani.

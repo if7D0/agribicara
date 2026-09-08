@@ -111,9 +111,7 @@
     <!-- Fase 5: jawaban AI -->
     <string name="ai_thinking">Sedang mencari jawaban…</string>
     <string name="ai_question_label">Pertanyaan Anda</string>
-    <string name="ai_answer_label">Jawaban</string>
     <string name="ai_answer_from_cache">Jawaban tersimpan dari pertanyaan sebelumnya.</string>
-    <string name="ai_ask_again">Tanya lagi</string>
     <string name="ai_open_weather">Lihat cuaca saja</string>
 
     <!-- Kegagalan AI. Tiap pesan menyebut tindakan yang berbeda, karena

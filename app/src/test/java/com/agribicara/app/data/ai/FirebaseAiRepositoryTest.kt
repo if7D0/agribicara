@@ -45,18 +45,6 @@ class FirebaseAiRepositoryTest {
      * (percobaan ulang tepat [Constants.AI_RETRY_COUNT] kali), dan menghitung
      * sendiri lebih jelas dibaca daripada rangkaian `coVerify`.
      */
-    /**
-     * Exception yang `cause`-nya dihitung saat dibaca, bukan disimpan.
-     *
-     * Satu-satunya cara membentuk rantai `cause` SIKLIK dari test: konstruktor
-     * dan `initCause` masing-masing hanya bisa dipakai sekali, dan menembus
-     * field-nya dengan refleksi ditolak JPMS.
-     */
-    private class SiklikException(private val penyebab: () -> Throwable?) :
-        Exception("siklik") {
-        override val cause: Throwable? get() = penyebab()
-    }
-
     private class FakeGenerator(
         private vararg val behaviours: () -> String?,
     ) : AiTextGenerator {
@@ -68,6 +56,18 @@ class FirebaseAiRepositoryTest {
             calls++
             return behaviour()
         }
+    }
+
+    /**
+     * Exception yang `cause`-nya dihitung saat dibaca, bukan disimpan.
+     *
+     * Satu-satunya cara membentuk rantai `cause` SIKLIK dari test: konstruktor
+     * dan `initCause` masing-masing hanya bisa dipakai sekali, dan menembus
+     * field-nya dengan refleksi ditolak JPMS.
+     */
+    private class SiklikException(private val penyebab: () -> Throwable?) :
+        Exception("siklik") {
+        override val cause: Throwable? get() = penyebab()
     }
 
     private fun repository(

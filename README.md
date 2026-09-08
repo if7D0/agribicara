@@ -5,8 +5,7 @@ tombol mikrofon, bertanya dalam Bahasa Indonesia, dan menerima jawaban lisan yan
 dihasilkan AI berdasarkan data cuaca hiperlokal BMKG.
 
 Status saat ini: **Fase 8 — Launch Preparation** (berjalan). Fase 1–7 dan 9
-selesai dan ada di `master`. Lihat `.claude/PRPs/prds/agribicara.prd.md` untuk
-peta fase.
+selesai. Lihat `.claude/PRPs/prds/agribicara.prd.md` untuk peta fase.
 
 Fase 8 tetap berjalan bukan karena ada kode tersisa — seluruh task kodenya sudah
 di-merge. Sisanya bukan kode sama sekali: akun Play Console, SHA-256 App Check,

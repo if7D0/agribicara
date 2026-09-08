@@ -247,13 +247,23 @@ kover {
                     "com.agribicara.app.data.notification.WeatherNotifier",
                     "com.agribicara.app.data.notification.WeatherNotifier$*",
 
-                    // Fase 9. Delegate DataStore terikat pada Context dan
-                    // menulis berkas sungguhan; tidak bisa dijalankan di JVM.
-                    // Isinya satu boolean tanpa keputusan apa pun — yang
-                    // berperilaku adalah HomeViewModel, dan itu diuji.
+                    // Fase 9. KELASNYA saja: delegate DataStore terikat pada
+                    // Context dan menulis berkas sungguhan, tidak bisa
+                    // dijalankan di JVM.
+                    //
+                    // `NotificationPromptStoreKt` SENGAJA TIDAK dikecualikan
+                    // lagi (temuan H1/M1 tinjauan Fase 9). Kebijakan kegagalan
+                    // baca tinggal di sana sebagai operator `tanpaGagalBaca()`
+                    // dan diuji NotificationPromptStoreTest — mengecualikannya
+                    // akan menyembunyikan justru bagian yang berperilaku.
+                    //
+                    // Pembenaran versi pertama berbunyi "yang berperilaku
+                    // adalah HomeViewModel, dan itu diuji". Itu TIDAK benar
+                    // saat ditulis: jalur ini tidak punya satu pun test sampai
+                    // tinjauan menemukannya. Sekarang punya empat di
+                    // HomeViewModelTest.
                     "com.agribicara.app.data.local.NotificationPromptStore",
                     "com.agribicara.app.data.local.NotificationPromptStore$*",
-                    "com.agribicara.app.data.local.NotificationPromptStoreKt",
 
                     // Fase 9. Hanya membangun NotificationChannel lalu
                     // menyerahkannya ke NotificationManager — tidak ada

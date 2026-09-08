@@ -1,3 +1,12 @@
+// Bagian layar suara yang MENERIMA masukan: tombol bicara, kolom teks, dan
+// jalan keluar ketika TTS tidak tersedia atau izin ditolak permanen.
+//
+// Dipisah dari VoiceScreen.kt di Fase 9 (temuan F5 L5). Ini refactor TANPA
+// perubahan perilaku.
+//
+// Alasan nama berkas WAJIB berakhiran Components.kt sama dengan
+// TranscriptComponents.kt - lihat catatan berkas di sana.
+
 package com.agribicara.app.presentation.voice.components
 
 import android.content.Context
@@ -27,7 +36,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import com.agribicara.app.R
@@ -36,14 +44,10 @@ import com.agribicara.app.presentation.theme.Dimens
 import com.agribicara.app.presentation.voice.VoiceUiState
 
 /**
- * Bagian layar suara yang MENERIMA masukan: tombol bicara, kolom teks, dan
- * jalan keluar ketika TTS tidak tersedia.
+ * Kendali suara: tombol mikrofon, "dengar lagi", dan pindah ke mode teks.
  *
- * Dipisah dari `VoiceScreen.kt` di Fase 9 (temuan F5 L5). Ini refactor TANPA
- * perubahan perilaku.
- *
- * Alasan nama berkas berakhiran `Components.kt` sama dengan
- * `TranscriptComponents.kt` — lihat KDoc di sana.
+ * Tombol "dengar lagi" hanya muncul bila `canReplay` — lihat komentar di
+ * dalamnya untuk sebabnya.
  */
 @Composable
 internal fun VoiceControls(

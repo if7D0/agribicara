@@ -1,3 +1,14 @@
+// Bagian layar suara yang MENAMPILKAN: pertanyaan, jawaban, dan keadaannya.
+//
+// Dipisah dari VoiceScreen.kt di Fase 9 (temuan F5 L5) yang sebelumnya 499
+// baris. Ini refactor TANPA perubahan perilaku.
+//
+// Nama berkas ini WAJIB berakhiran Components.kt. Nama berkas menentukan nama
+// kelas (TranscriptComponentsKt), dan nama kelas menentukan apakah Kover
+// menghitungnya lewat glob *ComponentsKt yang sudah ada. Berkas bernama
+// TranscriptArea.kt tidak akan cocok dengan satu pun glob dan diam-diam
+// menurunkan angka coverage.
+
 package com.agribicara.app.presentation.voice.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -28,16 +38,11 @@ import com.agribicara.app.presentation.voice.VoicePhase
 import com.agribicara.app.presentation.voice.VoiceUiState
 
 /**
- * Bagian layar suara yang MENAMPILKAN: pertanyaan, jawaban, dan keadaannya.
+ * Area pertanyaan + jawaban.
  *
- * Dipisah dari `VoiceScreen.kt` di Fase 9 (temuan F5 L5) yang sebelumnya 499
- * baris. Ini refactor TANPA perubahan perilaku.
- *
- * Nama berkasnya WAJIB berakhiran `Components.kt`. Nama berkas menentukan nama
- * kelas (`TranscriptComponentsKt`), dan nama kelas menentukan apakah Kover
- * menghitungnya lewat glob `*ComponentsKt` yang sudah ada. Berkas bernama
- * `TranscriptArea.kt` tidak akan cocok dengan satu pun glob dan diam-diam
- * menurunkan angka coverage.
+ * Pertanyaan tetap terlihat bersama jawabannya, dan tetap terlihat ketika
+ * jawabannya gagal didapat. Petani sudah bersusah payah mengucapkannya;
+ * menghapusnya karena jaringan putus memaksa ia mengulang tanpa sebab.
  */
 @Composable
 internal fun TranscriptArea(uiState: VoiceUiState, onOpenWeather: () -> Unit) {
@@ -137,35 +142,44 @@ internal fun TranscriptArea(uiState: VoiceUiState, onOpenWeather: () -> Unit) {
         }
     }
 
-        if (uiState.answerError != null) {
-            Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
-            Text(
-                text = uiState.answerError,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .testTag("voice_answer_error")
-                    .semantics { liveRegion = LiveRegionMode.Polite },
-            )
-            Spacer(modifier = Modifier.height(Dimens.SpaceSmall))
-            // Cuaca tersimpan tetap berguna tanpa internet, jadi layar ini
-            // tidak pernah menjadi jalan buntu meski jawaban gagal didapat.
-            TextButton(
-                onClick = onOpenWeather,
-                // heightIn eksplisit: tinggi bawaan TextButton Material3
-                // hanya 40dp, di bawah NFR 48dp. Preseden yang sama sudah
-                // dipakai tombol "ganti wilayah" di layar cuaca.
-                modifier = Modifier
-                    .heightIn(min = Dimens.TouchTargetMin)
-                    .testTag("voice_open_weather"),
-            ) {
-                Text(stringResource(R.string.ai_open_weather))
-            }
+    // DI LUAR Column di atas, dan itu DISENGAJA — bukan salah indentasi.
+    // `return@Column` pada cabang transcript kosong hanya keluar dari
+    // lambda Column, jadi menaruh blok ini di dalamnya akan membuat pesan
+    // kegagalan LENYAP tepat ketika belum ada transcript — misalnya STT
+    // gagal sebelum satu kata pun dikenali. Justru saat itulah petani
+    // paling butuh diberi tahu, berikut tawaran "lihat cuaca saja".
+    //
+    // Sampai Fase 9 blok ini diindentasi seolah berada di dalam Column,
+    // dan indentasi yang berbohong tentang struktur adalah cara termurah
+    // membuat orang berikutnya "merapikan"-nya sampai rusak.
+    if (uiState.answerError != null) {
+        Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(Dimens.SpaceMedium))
+        Text(
+            text = uiState.answerError,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .testTag("voice_answer_error")
+                .semantics { liveRegion = LiveRegionMode.Polite },
+        )
+        Spacer(modifier = Modifier.height(Dimens.SpaceSmall))
+        // Cuaca tersimpan tetap berguna tanpa internet, jadi layar ini
+        // tidak pernah menjadi jalan buntu meski jawaban gagal didapat.
+        TextButton(
+            onClick = onOpenWeather,
+            // heightIn eksplisit: tinggi bawaan TextButton Material3
+            // hanya 40dp, di bawah NFR 48dp. Preseden yang sama sudah
+            // dipakai tombol "ganti wilayah" di layar cuaca.
+            modifier = Modifier
+                .heightIn(min = Dimens.TouchTargetMin)
+                .testTag("voice_open_weather"),
+        ) {
+            Text(stringResource(R.string.ai_open_weather))
         }
+    }
 }
-
 
 private val TRANSCRIPT_MIN_HEIGHT = Dimens.MicButtonSize
