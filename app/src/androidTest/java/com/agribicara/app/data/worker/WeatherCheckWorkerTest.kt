@@ -11,7 +11,7 @@ import com.agribicara.app.core.common.NetworkResult
 import com.agribicara.app.data.local.dao.SentAlertDao
 import com.agribicara.app.data.local.entity.SentAlertEntity
 import com.agribicara.app.data.notification.AlertHistory
-import com.agribicara.app.data.notification.WeatherNotifier
+import com.agribicara.app.data.notification.WeatherAlertNotifier
 import com.agribicara.app.domain.model.DailyForecast
 import com.agribicara.app.domain.model.Forecast
 import com.agribicara.app.domain.model.HourlyForecast
@@ -23,11 +23,6 @@ import com.agribicara.app.domain.repository.RegionRepository
 import com.agribicara.app.domain.repository.WeatherRepository
 import com.agribicara.app.domain.usecase.GetForecastUseCase
 import com.agribicara.app.domain.usecase.ObserveSelectedRegionUseCase
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -38,7 +33,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -74,20 +68,11 @@ class WeatherCheckWorkerTest {
 
     private val keudeBakongan = Region("11.01.01.2001", "Keude Bakongan", RegionLevel.VILLAGE)
 
-    private val notifier = mockk<WeatherNotifier>(relaxed = true)
+    private val notifier = FakeNotifier()
 
-    private val sentAlertDao = mockk<SentAlertDao>(relaxed = true)
+    private val sentAlertDao = FakeSentAlertDao()
 
     private val clock: Clock = Clock.fixed(SEKARANG.atZone(ZONA).toInstant(), ZONA)
-
-    @Before
-    fun siapkanBawaan() {
-        // relaxed = true mengembalikan false untuk Boolean, dan false berarti
-        // "notifikasi tidak jadi tampil". Bawaannya harus true supaya jalur
-        // normal yang diuji adalah notifikasi yang BERHASIL tampil.
-        every { notifier.notify(any()) } returns true
-        coEvery { sentAlertDao.get(any()) } returns null
-    }
 
     private class FakeRegionRepository(private val region: Region?) : RegionRepository {
         override fun observeSelectedRegion(): Flow<Region?> = flowOf(region)
@@ -98,6 +83,61 @@ class WeatherCheckWorkerTest {
         ): NetworkResult<List<Region>> = NetworkResult.Success(emptyList())
 
         override suspend fun saveSelectedRegion(region: Region) = Unit
+    }
+
+    /**
+     * Pencatat notifikasi, pengganti mock.
+     *
+     * Ditulis tangan dan BUKAN MockK. Agen Android MockK menyuntikkan JAR ke
+     * boot classpath lalu meng-instrumentasi java.lang.Object, dan di Android
+     * 15 dengan targetSdk 37 empat akses hidden-API yang dibutuhkannya ditolak.
+     * Biayanya membengkak seiring banyaknya kelas termuat di proses, sehingga
+     * kelas ini — dulu satu-satunya pemakai MockK di seluruh androidTest —
+     * menahan suite penuh lebih dari 150 detik begitu tujuh kelas DAO berjalan
+     * lebih dulu, sementara ia lulus dalam 1,3 detik bila dijalankan sendiri.
+     * Lihat [WeatherAlertNotifier].
+     */
+    private class FakeNotifier : WeatherAlertNotifier {
+
+        /** Setiap panggilan notify, berhasil maupun tidak. */
+        val dicoba = mutableListOf<WeatherAlert>()
+
+        /** Hanya yang benar-benar diserahkan ke sistem. */
+        val terkirim = mutableListOf<WeatherAlert>()
+
+        /** Nilai balik notify. false meniru izin notifikasi yang belum ada. */
+        var berhasilTampil: Boolean = true
+
+        override fun notify(alert: WeatherAlert): Boolean {
+            dicoba += alert
+            if (berhasilTampil) terkirim += alert
+            return berhasilTampil
+        }
+    }
+
+    private class FakeSentAlertDao : SentAlertDao {
+
+        /** Baris yang sudah ada sebelum worker berjalan; null berarti kosong. */
+        var tersimpan: SentAlertEntity? = null
+
+        /** Setiap upsert yang benar-benar terjadi. */
+        val dicatat = mutableListOf<SentAlertEntity>()
+
+        override suspend fun get(id: Int): SentAlertEntity? = tersimpan
+
+        override suspend fun upsert(entity: SentAlertEntity) {
+            dicatat += entity
+            tersimpan = entity
+        }
+    }
+
+    private class FakeWeatherRepository(
+        private val hasil: NetworkResult<Forecast>,
+    ) : WeatherRepository {
+        override suspend fun getForecast(
+            regionCode: String,
+            regionName: String,
+        ): NetworkResult<Forecast> = hasil
     }
 
     private fun forecast(hourlyCode: Int) = Forecast(
@@ -134,8 +174,7 @@ class WeatherCheckWorkerTest {
         region: Region?,
         hasil: NetworkResult<Forecast>,
     ): WeatherCheckWorker {
-        val weatherRepository = mockk<WeatherRepository>()
-        coEvery { weatherRepository.getForecast(any(), any()) } returns hasil
+        val weatherRepository = FakeWeatherRepository(hasil)
 
         val factory = object : WorkerFactory() {
             override fun createWorker(
@@ -169,7 +208,7 @@ class WeatherCheckWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        verify(exactly = 0) { notifier.notify(any()) }
+        assertEquals(0, notifier.dicoba.size)
     }
 
     @Test
@@ -184,7 +223,7 @@ class WeatherCheckWorkerTest {
         // failure() akan membuat pemeriksaan ini tidak pernah dicoba lagi —
         // padahal jaringan desa yang putus hampir selalu pulih sendiri.
         assertTrue(result is ListenableWorker.Result.Retry)
-        verify(exactly = 0) { notifier.notify(any()) }
+        assertEquals(0, notifier.dicoba.size)
     }
 
     @Test
@@ -197,7 +236,7 @@ class WeatherCheckWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        verify(exactly = 0) { notifier.notify(any()) }
+        assertEquals(0, notifier.dicoba.size)
     }
 
     @Test
@@ -210,9 +249,8 @@ class WeatherCheckWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        verify(exactly = 1) {
-            notifier.notify(match<WeatherAlert> { it.regionName == "Keude Bakongan" })
-        }
+        assertEquals(1, notifier.dicoba.size)
+        assertEquals("Keude Bakongan", notifier.terkirim.single().regionName)
     }
 
     // --- H3: peringatan yang sama tidak diulang ----------------------------
@@ -223,7 +261,7 @@ class WeatherCheckWorkerTest {
         // hari, jadi satu badai yang sama akan ditemukan berkali-kali. Tanpa
         // penjaga ini petani menerima notifikasi yang sama empat kali sehari,
         // lalu mematikan notifikasi untuk selamanya.
-        coEvery { sentAlertDao.get(any()) } returns SentAlertEntity(
+        sentAlertDao.tersimpan = SentAlertEntity(
             regionCode = keudeBakongan.code,
             date = HARI_INI.toString(),
             reason = "THUNDERSTORM",
@@ -238,14 +276,14 @@ class WeatherCheckWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        verify(exactly = 0) { notifier.notify(any()) }
+        assertEquals(0, notifier.dicoba.size)
     }
 
     @Test
     fun peringatanDenganAlasanBerbedaTetapDikirim() = runTest {
         // Kejadian yang berbeda layak mengganggu lagi. Badai yang berubah
         // menjadi hujan lebat bukan pengulangan.
-        coEvery { sentAlertDao.get(any()) } returns SentAlertEntity(
+        sentAlertDao.tersimpan = SentAlertEntity(
             regionCode = keudeBakongan.code,
             date = HARI_INI.toString(),
             reason = "HEAVY_RAIN",
@@ -259,7 +297,7 @@ class WeatherCheckWorkerTest {
 
         worker.doWork()
 
-        verify(exactly = 1) { notifier.notify(any()) }
+        assertEquals(1, notifier.dicoba.size)
     }
 
     @Test
@@ -271,13 +309,9 @@ class WeatherCheckWorkerTest {
 
         worker.doWork()
 
-        coVerify(exactly = 1) {
-            sentAlertDao.upsert(
-                match<SentAlertEntity> {
-                    it.regionCode == keudeBakongan.code && it.reason == "THUNDERSTORM"
-                },
-            )
-        }
+        val dicatat = sentAlertDao.dicatat.single()
+        assertEquals(keudeBakongan.code, dicatat.regionCode)
+        assertEquals("THUNDERSTORM", dicatat.reason)
     }
 
     @Test
@@ -285,7 +319,7 @@ class WeatherCheckWorkerTest {
         // Kalau izin notifikasi belum diberikan, notify() mengembalikan false.
         // Mencatatnya sebagai terkirim akan membungkam kejadian itu selamanya,
         // bahkan setelah petani akhirnya memberikan izinnya.
-        every { notifier.notify(any()) } returns false
+        notifier.berhasilTampil = false
 
         val worker = buildWorker(
             region = keudeBakongan,
@@ -294,6 +328,6 @@ class WeatherCheckWorkerTest {
 
         worker.doWork()
 
-        coVerify(exactly = 0) { sentAlertDao.upsert(any()) }
+        assertEquals(0, sentAlertDao.dicatat.size)
     }
 }

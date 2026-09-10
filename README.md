@@ -97,8 +97,29 @@ akan gagal total.
 
 `connectedDebugAndroidTest` sengaja **tidak** dicantumkan: ia gagal enam kali
 berturut-turut di mesin pengembangan proyek ini selama Fase 6, tidak satu pun
-karena kode. Jalankan instrumented test lewat `adb install` kedua APK lalu
-`am instrument` per kelas — perintah lengkapnya ada di plan Fase 7 dan 8.
+karena kode. Jalankan instrumented test lewat skrip berikut:
+
+```bash
+./gradlew assembleDebug assembleDebugAndroidTest
+adb install -r -t app/build/outputs/apk/debug/app-debug.apk
+adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+scripts/instrumented.sh              # 92 test, 15 kelas, satu proses per kelas
+```
+
+Skrip itu menjalankan **satu kelas per proses**. Bukan kerapian: satu proses
+yang menjalankan seluruh 92 test tertahan tanpa sebab yang pernah berhasil
+ditemukan, sementara setiap subset sampai 89 test lulus. Alasan lengkap dan
+daftar hipotesis yang sudah gugur ada di kepala `scripts/instrumented.sh` —
+baca dulu sebelum mencoba menyatukannya kembali.
+
+Dua hal yang mudah menjebak:
+
+- Runner-nya **`com.agribicara.app.AgriBicaraTestRunner`**, bukan
+  `androidx.test.runner.AndroidJUnitRunner`. Memakai nama lama menghasilkan
+  `Unable to find instrumentation info`.
+- `am force-stop com.agribicara.app` **tidak cukup**. `com.agribicara.app.test`
+  adalah paket TERPISAH dan tetap hidup; sisa prosesnya menabrak run berikutnya
+  dan gejalanya menyerupai flaky. Skrip sudah mematikan keduanya.
 
 ## Build Rilis
 

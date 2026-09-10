@@ -32,7 +32,7 @@ class WeatherNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
     private val clock: Clock,
     private val alertChannel: WeatherAlertChannel,
-) {
+) : WeatherAlertNotifier {
 
     /**
      * Menampilkan [alert], atau diam bila izinnya belum ada.
@@ -47,7 +47,7 @@ class WeatherNotifier @Inject constructor(
      * Tidak pernah melempar. Pemanggilnya adalah Worker latar belakang, dan
      * gagal memberi tahu bukan alasan untuk menandai pekerjaannya gagal.
      */
-    fun notify(alert: WeatherAlert): Boolean {
+    override fun notify(alert: WeatherAlert): Boolean {
         // Diperiksa, bukan ditangkap. Sebelumnya SecurityException-nya ditelan
         // runCatching; lint benar menolak itu, dan memang memeriksa lebih baik:
         // menolak izin adalah keadaan normal yang layak dicatat sebagai
