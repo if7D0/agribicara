@@ -6,7 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.agribicara.app.core.common.NetworkResult
 import com.agribicara.app.data.notification.AlertHistory
-import com.agribicara.app.data.notification.WeatherNotifier
+import com.agribicara.app.data.notification.WeatherAlertNotifier
 import com.agribicara.app.domain.model.WeatherAlert
 import com.agribicara.app.domain.usecase.GetForecastUseCase
 import com.agribicara.app.domain.usecase.ObserveSelectedRegionUseCase
@@ -34,7 +34,7 @@ class WeatherCheckWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val getForecast: GetForecastUseCase,
     private val observeSelectedRegion: ObserveSelectedRegionUseCase,
-    private val notifier: WeatherNotifier,
+    private val notifier: WeatherAlertNotifier,
     private val alertHistory: AlertHistory,
     private val clock: Clock,
 ) : CoroutineWorker(appContext, params) {

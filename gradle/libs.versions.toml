@@ -138,8 +138,6 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 tensorflow-lite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorflowLite" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
-# Varian Android dari mockk, dibutuhkan instrumented test WeatherCheckWorker.
-mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
 
