@@ -149,8 +149,15 @@
     <string name="detection_retake">Foto lagi</string>
     <string name="detection_disclaimer">Ini dugaan awal dari foto, bukan diagnosis pasti.</string>
     <string name="detection_diagnosed_label">Dugaan penyakit</string>
+    <!-- Pita keyakinan. Hasil yang lolos gerbang tetapi di bawah ambang kuat
+         hanya benar sekitar dua dari tiga kali (lihat tabel kalibrasi di
+         Constants), jadi judul dan peringatannya sengaja berbeda — bukan cuma
+         angka persen, yang paling tidak terbaca pembaca yang dituju. -->
+    <string name="detection_diagnosed_label_weak">Dugaan lemah</string>
+    <string name="detection_weak_body">Foto ini kurang meyakinkan, jadi hasil ini sering meleset. Foto ulang satu daun dari dekat dengan cahaya cukup, atau tanyakan dulu ke penyuluh sebelum bertindak.</string>
     <string name="detection_confidence">Keyakinan %1$d%%</string>
     <string name="detection_healthy_title">Daun tampak sehat</string>
+    <string name="detection_healthy_title_weak">Sepertinya sehat, belum pasti</string>
     <string name="detection_healthy_body">Tidak terlihat tanda penyakit dari foto ini. Tetap pantau tanaman Anda secara berkala.</string>
     <string name="detection_unsure_title">Belum yakin dari foto ini</string>
     <string name="detection_unsure_body">Coba foto ulang: satu daun padi saja, latar polos, cahaya cukup, dan fokus yang jelas.</string>

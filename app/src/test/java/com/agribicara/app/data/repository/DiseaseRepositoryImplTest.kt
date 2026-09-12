@@ -9,6 +9,7 @@ import com.agribicara.app.data.local.entity.DetectionEntity
 import com.agribicara.app.data.ml.ImageClassifier
 import com.agribicara.app.data.ml.ImageDecodeException
 import com.agribicara.app.data.ml.ModelUnavailableException
+import com.agribicara.app.domain.model.ConfidenceBand
 import com.agribicara.app.domain.model.DetectionOutcome
 import com.agribicara.app.domain.model.DetectionOutcomeType
 import com.agribicara.app.domain.model.DiseasePrediction
@@ -59,6 +60,10 @@ class DiseaseRepositoryImplTest {
         val outcome = (result as NetworkResult.Success).data
         assertTrue(outcome is DetectionOutcome.Diagnosed)
         assertEquals("blast", (outcome as DetectionOutcome.Diagnosed).label)
+        // Menjaga argumen bernama di DiseaseRepositoryImpl tidak tertukar:
+        // strongThreshold yang keliru diisi ambang tampil akan menyebut semua
+        // hasil KUAT tanpa satu pun test lain yang mengeluh.
+        assertEquals(ConfidenceBand.STRONG, (outcome as DetectionOutcome.Diagnosed).band)
         coVerify {
             dao.insert(match { it.outcomeType == DetectionOutcomeType.DIAGNOSED.name && it.label == "blast" })
         }

@@ -202,9 +202,14 @@ private fun CaptureState(
 }
 
 /**
- * Kartu hasil. Tiga bentuk berbeda untuk tiga [DetectionOutcome], dan
+ * Kartu hasil. Bentuk berbeda untuk tiap [DetectionOutcome], dan
  * [DetectionOutcome.Unsure] SENGAJA tidak menampilkan label apa pun — itu
  * pengaman inti fase ini.
+ *
+ * Dua hasil positif dibedakan lagi oleh pita keyakinannya: pita lemah
+ * mendapat judul sendiri plus [WeakBandWarning], karena hasil di pita itu
+ * hanya benar sekitar dua dari tiga kali. Pemetaan hasil → teks ada di
+ * [DetectionOutcomeStrings] agar bisa diuji tanpa perangkat.
  *
  * Tanpa ketergantungan ViewModel agar bisa diuji langsung dengan `createComposeRule`.
  */
@@ -235,7 +240,7 @@ internal fun DetectionResult(
             ) {
                 when (outcome) {
                     is DetectionOutcome.Diagnosed -> {
-                        SectionTitle(stringResource(R.string.detection_diagnosed_label))
+                        SectionTitle(stringResource(DetectionOutcomeStrings.titleFor(outcome)))
                         Text(
                             text = outcome.info.displayName,
                             style = MaterialTheme.typography.headlineSmall,
@@ -255,6 +260,9 @@ internal fun DetectionResult(
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        if (DetectionOutcomeStrings.showsWeakWarning(outcome)) {
+                            WeakBandWarning()
+                        }
                         Text(
                             text = stringResource(R.string.detection_disclaimer),
                             style = MaterialTheme.typography.labelLarge,
@@ -263,16 +271,19 @@ internal fun DetectionResult(
                     }
 
                     is DetectionOutcome.Healthy -> {
-                        SectionTitle(stringResource(R.string.detection_healthy_title))
+                        SectionTitle(stringResource(DetectionOutcomeStrings.titleFor(outcome)))
                         Text(
                             text = stringResource(R.string.detection_healthy_body),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        if (DetectionOutcomeStrings.showsWeakWarning(outcome)) {
+                            WeakBandWarning()
+                        }
                     }
 
                     is DetectionOutcome.Unsure -> {
-                        SectionTitle(stringResource(R.string.detection_unsure_title))
+                        SectionTitle(stringResource(DetectionOutcomeStrings.titleFor(outcome)))
                         Text(
                             text = stringResource(R.string.detection_unsure_body),
                             style = MaterialTheme.typography.bodyLarge,
@@ -293,6 +304,28 @@ internal fun DetectionResult(
             Text(text = stringResource(R.string.detection_retake))
         }
     }
+}
+
+/**
+ * Peringatan untuk hasil berpita lemah.
+ *
+ * Memakai warna `error` alih-alih `onSurfaceVariant` supaya terbaca sebagai
+ * peringatan, bukan keterangan tambahan; ukurannya tetap `bodyLarge` karena
+ * teks peringatan adalah bagian terpenting kartu ini, bukan catatan kaki.
+ *
+ * Kontras di atas `surfaceVariant` kartu, diukur seperti di `Color.kt`:
+ *   ErrorRed di atas SurfaceVariantLight ....... 5.68:1
+ *   ErrorRedLight di atas SurfaceVariantDark ... 5.53:1
+ * Keduanya lolos WCAG AA untuk teks normal (4.5:1).
+ */
+@Composable
+private fun WeakBandWarning() {
+    Text(
+        text = stringResource(R.string.detection_weak_body),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.testTag("weak_band_warning"),
+    )
 }
 
 @Composable

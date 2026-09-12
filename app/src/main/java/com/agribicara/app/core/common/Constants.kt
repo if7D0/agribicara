@@ -339,6 +339,41 @@ object Constants {
      */
     const val DISEASE_CONFIDENCE_THRESHOLD = 0.60f
 
+    /**
+     * Ambang kedua: di atas ini hasil disebut dugaan KUAT, di bawahnya (tetapi
+     * masih di atas [DISEASE_CONFIDENCE_THRESHOLD]) dugaan LEMAH.
+     *
+     * Sebelum ada pita ini, hasil 0.61 dan 0.97 tampil dengan kartu yang sama;
+     * satu-satunya pembeda adalah angka persen kecil, yang justru paling tidak
+     * terbaca oleh pembaca yang dituju aplikasi ini.
+     *
+     * DIUKUR dari tabel kalibrasi yang sama seperti ambang pertama, tetapi
+     * dibaca MARGINAL per pita, bukan kumulatif. Angka kumulatif menyamarkan
+     * masalahnya: ketepatan ">= 0.60" yang 91.7% itu ditopang hampir seluruhnya
+     * oleh foto berkeyakinan tinggi. Dipecah per pita
+     * (cakupan_i − cakupan_i+1 dan benar_i − benar_i+1):
+     *
+     *   pita           cakupan   dugaan itu benar
+     *   0.60 – 0.65      2.7%          53.6%
+     *   0.65 – 0.70      2.8%          63.3%
+     *   0.70 – 0.80      7.8%          71.7%
+     *   0.60 – 0.80     13.3%          66.3%   <- digabung jadi LEMAH
+     *   >= 0.80         75.2%          96.2%   <- KUAT
+     *
+     * Jadi 0.80 bukan angka bulat yang enak dilihat: di situlah ketepatan
+     * melompat dari dua-dari-tiga ke hampir pasti. Menaikkannya ke 0.90 hanya
+     * memindahkan foto yang sudah 96% benar ke label "lemah"; menurunkannya ke
+     * 0.70 menyebut "kuat" sesuatu yang meleset satu dari tiga kali.
+     *
+     * Pita LEMAH sengaja TIDAK disembunyikan — 13.3% foto ada di sana, dan
+     * membuangnya berarti menukar dugaan lemah dengan layar "belum yakin" yang
+     * tidak menolong siapa pun. Yang berubah hanya cara menyampaikannya.
+     *
+     * Sama seperti ambang pertama: kalau model diganti, JALANKAN ULANG
+     * kalibrasi. Angka ini milik model tertentu.
+     */
+    const val DISEASE_STRONG_CONFIDENCE_THRESHOLD = 0.80f
+
     /** Batas baris riwayat deteksi yang diobservasi UI dan disimpan. */
     const val DETECTION_HISTORY_LIMIT = 50
 }

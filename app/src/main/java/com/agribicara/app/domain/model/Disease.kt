@@ -34,11 +34,34 @@ data class DiseaseInfo(
 )
 
 /**
+ * Seberapa jauh sebuah hasil di atas gerbang keyakinan.
+ *
+ * Lolos gerbang TIDAK berarti sama meyakinkannya. Dari tabel kalibrasi yang
+ * sama dengan `Constants.DISEASE_CONFIDENCE_THRESHOLD`, prediksi tepat di atas
+ * ambang tampil jauh lebih sering meleset daripada prediksi berkeyakinan
+ * tinggi — perinciannya di `Constants.DISEASE_STRONG_CONFIDENCE_THRESHOLD`.
+ * Menampilkan keduanya dengan kartu yang sama, seperti sebelumnya, menyerahkan
+ * pembedaan itu ke angka persen kecil yang tidak terbaca petani.
+ */
+enum class ConfidenceBand {
+
+    /** Di atas ambang kuat: layak ditindaklanjuti. */
+    STRONG,
+
+    /** Lolos gerbang tetapi di bawah ambang kuat: sampaikan sebagai dugaan lemah. */
+    WEAK,
+}
+
+/**
  * Hasil satu deteksi, sudah melewati gerbang keyakinan.
  *
  * Sengaja tiga kemungkinan terpisah, bukan sekadar label + skor: UI menampilkan
  * ketiganya berbeda, dan [Unsure] adalah pengaman inti fase ini — menahan
  * tebakan yang tidak yakin agar tidak muncul sebagai diagnosis pasti.
+ *
+ * Dua hasil positif membawa [ConfidenceBand] karena keduanya bisa membuat
+ * petani bertindak: diagnosis keliru membuatnya menangani penyakit yang salah,
+ * dan "sehat" yang keliru membuatnya membiarkan penyakit menyebar.
  */
 sealed interface DetectionOutcome {
 
@@ -47,10 +70,14 @@ sealed interface DetectionOutcome {
         val label: String,
         val confidence: Float,
         val info: DiseaseInfo,
+        val band: ConfidenceBand,
     ) : DetectionOutcome
 
     /** Model cukup yakin daun dalam kondisi sehat. */
-    data class Healthy(val confidence: Float) : DetectionOutcome
+    data class Healthy(
+        val confidence: Float,
+        val band: ConfidenceBand,
+    ) : DetectionOutcome
 
     /**
      * Keyakinan di bawah ambang, atau label tak dikenal katalog.
