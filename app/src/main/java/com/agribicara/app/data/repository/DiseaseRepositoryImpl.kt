@@ -44,6 +44,7 @@ class DiseaseRepositoryImpl @Inject constructor(
         val outcome = DiseaseClassificationPolicy.decide(
             predictions = predictions,
             threshold = Constants.DISEASE_CONFIDENCE_THRESHOLD,
+            strongThreshold = Constants.DISEASE_STRONG_CONFIDENCE_THRESHOLD,
         )
         persist(outcome)
         NetworkResult.Success(outcome)

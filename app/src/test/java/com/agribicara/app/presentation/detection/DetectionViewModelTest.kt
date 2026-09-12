@@ -3,6 +3,7 @@ package com.agribicara.app.presentation.detection
 import android.net.Uri
 import com.agribicara.app.MainDispatcherRule
 import com.agribicara.app.core.common.NetworkResult
+import com.agribicara.app.domain.model.ConfidenceBand
 import com.agribicara.app.domain.model.DetectionOutcome
 import com.agribicara.app.domain.model.DetectionOutcomeType
 import com.agribicara.app.domain.model.DiseaseDetection
@@ -38,7 +39,7 @@ class DetectionViewModelTest {
     fun `analyze sukses menaruh outcome dan mematikan loading`() =
         runTest(mainDispatcherRule.testDispatcher.scheduler) {
             coEvery { repository.classify(any()) } returns
-                NetworkResult.Success(DetectionOutcome.Healthy(0.9f))
+                NetworkResult.Success(DetectionOutcome.Healthy(0.9f, ConfidenceBand.STRONG))
 
             val vm = viewModel()
             vm.analyze(uri)
