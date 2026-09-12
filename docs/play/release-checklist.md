@@ -6,9 +6,19 @@ repo, dan tidak bisa: butuh akun, perangkat sungguhan, dan petani sungguhan.
 Statusnya **belum dikerjakan** sampai Anda mencentangnya sendiri. Jangan
 menganggap fase ini selesai hanya karena kodenya hijau.
 
-> ## Jalur rilis berubah (2026-09-11): pilot dulu, Play Store belakangan
+> ## Status akhir (2026-09-12): tidak ada jalur rilis yang ditempuh
 >
-> "Selesai" kini berarti **pilot tervalidasi**, bukan aplikasi terbit di Play
+> Proyek diselesaikan sebagai **portfolio**. APK rilis dibagikan langsung ke
+> segelintir kenalan — bukan lewat Play Store (A–D), bukan lewat App Distribution
+> (P). Seluruh berkas ini ditinggalkan utuh sebagai peta seandainya salah satu
+> jalur ditempuh nanti; **satu-satunya butir yang benar-benar dikerjakan dari
+> daftar manual ini adalah B6–B8 dan P2.**
+>
+> Riwayat di bawah dibiarkan apa adanya agar urutan keputusannya terbaca.
+
+> ## Jalur rilis berubah (2026-09-11): pilot dulu, Play Store belakangan — *riwayat*
+>
+> "Selesai" saat itu berarti **pilot tervalidasi**, bukan aplikasi terbit di Play
 > Store: APK rilis dibagikan ke 5–10 petani lewat **Firebase App Distribution**,
 > dan metriknya kualitatif — umpan balik langsung dari petani, tanpa Firebase
 > Analytics dan tanpa survei in-app.
@@ -161,13 +171,22 @@ karena keduanya menuntut hal yang tidak bisa disediakan Fase 7.
 
 ---
 
-## P. Pilot lewat Firebase App Distribution — **ini yang berlaku sekarang**
+## P. Pilot lewat Firebase App Distribution — *tidak ditempuh*
+
+> **Dihentikan 2026-09-12, bukan gagal.** Proyek diselesaikan sebagai **portfolio**,
+> dan APK-nya dibagikan langsung ke segelintir kenalan alih-alih lewat App
+> Distribution. Butir P2 (cadangan keystore) **sudah dikerjakan** karena satu-satunya
+> butir yang tidak bisa diperbaiki belakangan. Sisanya dibiarkan terbuka apa adanya:
+> tidak ada petani sungguhan yang memakai aplikasi ini, dan itu dicatat jujur di
+> README maupun report Fase 8.
+>
+> Isi bagian ini tetap berlaku seandainya pilot benar-benar dijalankan nanti.
 
 Enam kriteria di bawah inilah definisi "selesai" yang disepakati 2026-09-11.
 Butir P1 sudah terpenuhi; sisanya menuntut akun, perangkat, dan manusia.
 
 - [x] **P1.** Fitur AI terbukti menjawab di APK rilis hasil sideload *(2026-09-11, lihat hasil B6–B8 di atas)*
-- [ ] **P2.** Salin cadangan `agribicara-upload.jks` ke **luar mesin ini** — flashdisk, atau ZIP berkata sandi di penyimpanan awan. Kehilangan upload key berarti tidak bisa lagi mengunggah update untuk `com.agribicara.app`, selamanya. **Kerjakan sebelum unggahan pertama, bukan sesudahnya**
+- [x] **P2.** *(selesai 2026-09-12)* Salin cadangan `agribicara-upload.jks` ke **luar mesin ini** — flashdisk, atau ZIP berkata sandi di penyimpanan awan. Kehilangan upload key berarti tidak bisa lagi mengunggah update untuk `com.agribicara.app`, selamanya. **Kerjakan sebelum unggahan pertama, bukan sesudahnya**
 - [ ] **P3.** Firebase Console → **App Distribution**: aktifkan, lalu buat grup tester `pilot-petani`
 - [ ] **P4.** Terbitkan privacy policy lewat butir **C1–C5** (repo publik + GitHub Pages, dan **isi alamat email kontak** yang masih placeholder). Tanpa Play listing, halaman ini satu-satunya tempat petani bisa membacanya — dan suara mereka memang dikirim ke Gemini
 - [ ] **P5.** Unggah APK rilis ke App Distribution, lalu **pasang langsung di HP petani saat bertemu**. Alur undangan email + aplikasi App Tester terlalu berat untuk pembaca yang dituju aplikasi ini
