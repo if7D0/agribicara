@@ -4,13 +4,56 @@ Asisten pertanian berbasis suara untuk petani kecil di Indonesia. Petani menekan
 tombol mikrofon, bertanya dalam Bahasa Indonesia, dan menerima jawaban lisan yang
 dihasilkan AI berdasarkan data cuaca hiperlokal BMKG.
 
-Status saat ini: **Fase 8 — Launch Preparation** (berjalan). Fase 1–7 dan 9
-selesai. Lihat `.claude/PRPs/prds/agribicara.prd.md` untuk peta fase.
+Status: **selesai sebagai proyek portfolio** (2026-09-12). Sembilan fase
+`complete`; lihat `.claude/PRPs/prds/agribicara.prd.md` untuk peta fase dan
+`.claude/PRPs/reports/` untuk laporan tiap fase berikut pelajarannya.
 
-Fase 8 tetap berjalan bukan karena ada kode tersisa — seluruh task kodenya sudah
-di-merge. Sisanya bukan kode sama sekali: akun Play Console, SHA-256 App Check,
-rekrutmen beta, uji perangkat low-end, dan aksen daerah STT, semuanya di
+Aplikasinya berfungsi dan dipakai di perangkat sungguhan, tetapi **tidak pernah
+dibawa ke Play Store dan tidak pernah diuji oleh petani sungguhan.** Keputusan
+itu diambil sadar: yang tersisa dari jalur rilis bukan lagi soal kode melainkan
+akun Play Console, closed testing 12 tester × 14 hari, dan rekrutmen lapangan —
+tidak sebanding untuk proyek yang tujuannya memperlihatkan kualitas rekayasa.
+Bekas jalur itu sengaja ditinggalkan utuh di
 [`docs/play/release-checklist.md`](docs/play/release-checklist.md).
+
+## Mencoba aplikasinya
+
+Setelah `git clone`, yang Anda dapat **tanpa setup apa pun**:
+
+- ✅ **Deteksi penyakit padi berfungsi penuh.** Model TFLite dibundel di repo dan
+  berjalan sepenuhnya offline — tidak ada akun, kunci, atau internet yang
+  dibutuhkan. Foto satu daun padi dari dekat, dan aplikasi menyebut dugaannya
+  beserta pita keyakinannya.
+- ✅ Prakiraan cuaca BMKG, pemilihan wilayah, notifikasi, dan seluruh UI.
+- ❌ **Fitur tanya-jawab suara TIDAK akan berfungsi.** Yang muncul: *"Layanan
+  jawaban sedang tidak bisa dihubungi."*
+
+Alasan yang terakhir layak dijelaskan, karena ini keputusan desain, bukan berkas
+yang lupa disertakan. Proyek ini **tidak pernah menaruh API key Gemini di mana
+pun** — kunci yang ditanam di APK bisa dibaca siapa saja yang membongkarnya.
+Sebagai gantinya panggilan AI lewat **Firebase AI Logic**, yang dijaga **Firebase
+App Check**: hanya build yang sidik jari penandatanganannya terdaftar di projek
+Firebase yang boleh memanggil. Build hasil clone Anda ditandatangani kunci Anda
+sendiri, jadi wajar ditolak — justru itu gunanya.
+
+Untuk menghidupkannya di clone Anda sendiri, buat projek Firebase Anda sendiri:
+
+1. Buat projek di [Firebase Console](https://console.firebase.google.com), tambah
+   aplikasi Android dengan package `com.agribicara.app`, lalu **timpa**
+   `app/google-services.json` dengan milik Anda.
+2. Aktifkan **Firebase AI Logic** (Gemini) di projek itu.
+3. Untuk build debug: jalankan aplikasi sekali, salin *debug token* App Check
+   dari logcat (`DebugAppCheckProvider`), lalu daftarkan di **App Check → Apps →
+   Manage debug tokens**. Token hilang bila data aplikasi dibersihkan atau
+   aplikasi di-uninstall.
+4. Untuk build rilis: daftarkan **Play Integrity** dan SHA-256 kunci Anda. Kalau
+   APK-nya dipasang di luar Play, longgarkan juga syarat `PLAY_RECOGNIZED` —
+   rinciannya di [`docs/play/release-checklist.md`](docs/play/release-checklist.md)
+   bagian B, lengkap dengan arti error `400` dan `403` yang akan Anda temui.
+
+`app/google-services.json` memang sengaja ikut di-commit: berkas itu bukan
+rahasia (isinya identifier publik), dan App Check-lah yang menjaga akses, bukan
+kerahasiaan berkas itu.
 
 **Deteksi penyakit padi SUDAH ada** sejak Fase 4 (2026-09-08). README ini
 sebelumnya menyatakan sebaliknya, dan itu benar pada zamannya: spike 2026-08-30
@@ -25,6 +68,14 @@ Yang BELUM terbukti dan sengaja dicatat terbuka:
 - TalkBack belum pernah dinyalakan.
 - Aplikasi belum pernah diuji di perangkat low-end sungguhan (Android 7 / RAM 2GB).
 - Jalur kamera langsung ("Ambil foto") belum diuji; semua uji lewat galeri.
+- **Tidak ada petani sungguhan yang pernah memakai aplikasi ini.** Hipotesis inti
+  PRD — bahwa petani lebih suka berbicara daripada membaca — tetap sebuah
+  hipotesis, tidak tervalidasi.
+- Aksen daerah untuk STT belum pernah diuji; seluruh uji suara memakai satu
+  penutur.
+- Notifikasi cuaca ekstrem belum pernah terlihat di layar: memicunya menuntut
+  BMKG benar-benar meramalkan hujan ≥50 mm, dan itu tidak terjadi selama
+  pengembangan.
 
 ## Syarat Build
 
