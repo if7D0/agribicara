@@ -106,7 +106,7 @@ Resolusi minimal 1080px pada sisi terpendek.
 Ambil dari perangkat sungguhan, bukan mockup:
 
 ```bash
-export ANDROID_HOME="C:/Users/ACER/AppData/Local/Android/Sdk"
+export ANDROID_HOME="C:/Users/<nama-anda>/AppData/Local/Android/Sdk"
 export MSYS_NO_PATHCONV=1
 A="$ANDROID_HOME/platform-tools/adb.exe"
 "$A" exec-out screencap -p > docs/play/assets/screenshot-1.png

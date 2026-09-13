@@ -146,7 +146,7 @@ terpisah; yang penting sebelum rilis publik.)
 **7c. Build & pasang:**
 ```bash
 export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr"
-export ANDROID_HOME="C:/Users/ACER/AppData/Local/Android/Sdk"
+export ANDROID_HOME="C:/Users/<nama-anda>/AppData/Local/Android/Sdk"
 ./gradlew assembleDebug
 "$ANDROID_HOME/platform-tools/adb.exe" install -r -t app/build/outputs/apk/debug/app-debug.apk
 ```
