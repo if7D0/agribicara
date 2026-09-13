@@ -6,7 +6,7 @@
 ![Kotlin](https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF.svg)
 
 **Asisten pertanian di HP yang bisa diajak bicara.** Petani cukup menekan tombol
-mikrofon, bertanya dalam Bahasa Indonesia, lalu mendengar jawabannya — dan bisa
+mikrofon, bertanya dalam Bahasa Indonesia, lalu mendengar jawabannya dan bisa
 memotret daun padi untuk mengetahui kemungkinan penyakitnya, bahkan tanpa internet.
 
 ![AgriBicara](docs/play/assets/feature-graphic.png)
@@ -17,7 +17,7 @@ memotret daun padi untuk mengetahui kemungkinan penyakitnya, bahkan tanpa intern
 
 Banyak petani kecil di Indonesia menggarap lahan kurang dari 2 hektare dan tidak
 terbiasa membaca aplikasi yang penuh menu dan tulisan. Padahal keputusan harian
-mereka — kapan menanam, kapan menyemprot, apakah besok hujan — sangat bergantung
+mereka seperti kapan menanam, kapan menyemprot, apakah besok hujan, sangat bergantung
 pada informasi cuaca.
 
 AgriBicara mencoba menjawab masalah itu dengan dua kemampuan:
