@@ -1,240 +1,162 @@
 # AgriBicara
 
-Asisten pertanian berbasis suara untuk petani kecil di Indonesia. Petani menekan
-tombol mikrofon, bertanya dalam Bahasa Indonesia, dan menerima jawaban lisan yang
-dihasilkan AI berdasarkan data cuaca hiperlokal BMKG.
+[![CI](https://github.com/if7D0/agribicara/actions/workflows/ci.yml/badge.svg)](https://github.com/if7D0/agribicara/actions/workflows/ci.yml)
+[![Lisensi: Apache-2.0](https://img.shields.io/badge/lisensi-Apache--2.0-blue.svg)](LICENSE)
+![Android 7.0+](https://img.shields.io/badge/Android-7.0%2B-3DDC84.svg)
+![Kotlin](https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF.svg)
 
-Status: **selesai sebagai proyek portfolio** (2026-09-12). Sembilan fase
-`complete`; lihat `.claude/PRPs/prds/agribicara.prd.md` untuk peta fase dan
-`.claude/PRPs/reports/` untuk laporan tiap fase berikut pelajarannya.
+**Asisten pertanian di HP yang bisa diajak bicara.** Petani cukup menekan tombol
+mikrofon, bertanya dalam Bahasa Indonesia, lalu mendengar jawabannya — dan bisa
+memotret daun padi untuk mengetahui kemungkinan penyakitnya, bahkan tanpa internet.
 
-Aplikasinya berfungsi dan dipakai di perangkat sungguhan, tetapi **tidak pernah
-dibawa ke Play Store dan tidak pernah diuji oleh petani sungguhan.** Keputusan
-itu diambil sadar: yang tersisa dari jalur rilis bukan lagi soal kode melainkan
-akun Play Console, closed testing 12 tester × 14 hari, dan rekrutmen lapangan —
-tidak sebanding untuk proyek yang tujuannya memperlihatkan kualitas rekayasa.
-Bekas jalur itu sengaja ditinggalkan utuh di
-[`docs/play/release-checklist.md`](docs/play/release-checklist.md).
+![AgriBicara](docs/play/assets/feature-graphic.png)
 
-## Mencoba aplikasinya
+---
 
-Setelah `git clone`, yang Anda dapat **tanpa setup apa pun**:
+## Apa ini?
 
-- ✅ **Deteksi penyakit padi berfungsi penuh.** Model TFLite dibundel di repo dan
-  berjalan sepenuhnya offline — tidak ada akun, kunci, atau internet yang
-  dibutuhkan. Foto satu daun padi dari dekat, dan aplikasi menyebut dugaannya
-  beserta pita keyakinannya.
-- ✅ Prakiraan cuaca BMKG, pemilihan wilayah, notifikasi, dan seluruh UI.
-- ❌ **Fitur tanya-jawab suara TIDAK akan berfungsi.** Yang muncul: *"Layanan
-  jawaban sedang tidak bisa dihubungi."*
+Banyak petani kecil di Indonesia menggarap lahan kurang dari 2 hektare dan tidak
+terbiasa membaca aplikasi yang penuh menu dan tulisan. Padahal keputusan harian
+mereka — kapan menanam, kapan menyemprot, apakah besok hujan — sangat bergantung
+pada informasi cuaca.
 
-Alasan yang terakhir layak dijelaskan, karena ini keputusan desain, bukan berkas
-yang lupa disertakan. Proyek ini **tidak pernah menaruh API key Gemini di mana
-pun** — kunci yang ditanam di APK bisa dibaca siapa saja yang membongkarnya.
-Sebagai gantinya panggilan AI lewat **Firebase AI Logic**, yang dijaga **Firebase
-App Check**: hanya build yang sidik jari penandatanganannya terdaftar di projek
-Firebase yang boleh memanggil. Build hasil clone Anda ditandatangani kunci Anda
-sendiri, jadi wajar ditolak — justru itu gunanya.
+AgriBicara mencoba menjawab masalah itu dengan dua kemampuan:
 
-Untuk menghidupkannya di clone Anda sendiri, buat projek Firebase Anda sendiri:
+| | Kemampuan | Butuh internet? |
+|---|---|---|
+| 🎙️ | **Tanya-jawab lewat suara.** Tanyakan misalnya *"Besok cocok untuk menanam tidak?"*. Aplikasi melihat prakiraan cuaca untuk desa Anda, lalu menjawab dengan suara dalam kalimat sederhana. Bisa juga mengetik bila sedang tidak bisa bersuara. | Ya |
+| 🌾 | **Cek penyakit padi dari foto.** Foto satu helai daun padi dari dekat; aplikasi menyebut dugaan penyakitnya beserta seberapa yakin ia. | **Tidak** — berjalan penuh di HP |
 
-1. Buat projek di [Firebase Console](https://console.firebase.google.com), tambah
-   aplikasi Android dengan package `com.agribicara.app`, lalu **timpa**
-   `app/google-services.json` dengan milik Anda.
-2. Aktifkan **Firebase AI Logic** (Gemini) di projek itu.
-3. Untuk build debug: jalankan aplikasi sekali, salin *debug token* App Check
-   dari logcat (`DebugAppCheckProvider`), lalu daftarkan di **App Check → Apps →
-   Manage debug tokens**. Token hilang bila data aplikasi dibersihkan atau
-   aplikasi di-uninstall.
-4. Untuk build rilis: daftarkan **Play Integrity** dan SHA-256 kunci Anda. Kalau
-   APK-nya dipasang di luar Play, longgarkan juga syarat `PLAY_RECOGNIZED` —
-   rinciannya di [`docs/play/release-checklist.md`](docs/play/release-checklist.md)
-   bagian B, lengkap dengan arti error `400` dan `403` yang akan Anda temui.
+Ditambah: prakiraan cuaca per desa, pemberitahuan bila diperkirakan hujan lebat,
+tulisan besar dan kontras tinggi agar mudah dibaca di bawah terik matahari, serta
+mode gelap.
 
-`app/google-services.json` memang sengaja ikut di-commit: berkas itu bukan
-rahasia (isinya identifier publik), dan App Check-lah yang menjaga akses, bukan
-kerahasiaan berkas itu.
+## Cara kerjanya
 
-**Deteksi penyakit padi SUDAH ada** sejak Fase 4 (2026-09-08). README ini
-sebelumnya menyatakan sebaliknya, dan itu benar pada zamannya: spike 2026-08-30
-membuktikan PlantVillage tidak memuat padi sama sekali. Datasetnya diganti
-**Paddy Doctor** (Apache 2.0, 10 kelas padi), model MobileNetV3-Small dibundel di
-`app/src/main/assets/` dan berjalan sepenuhnya offline.
+**Tanya-jawab suara**
 
-Yang BELUM terbukti dan sengaja dicatat terbuka:
+```mermaid
+flowchart LR
+    A["🎙️ Petani bertanya"] --> B["Suara diubah<br/>jadi teks"]
+    B --> C["Ambil prakiraan cuaca<br/>desa dari BMKG"]
+    C --> D["AI Gemini menyusun<br/>jawaban berdasarkan cuaca"]
+    D --> E["🔊 Jawaban dibacakan"]
+```
 
-- **0.862 adalah akurasi validasi, bukan lapangan.** Daun blas kasat mata pada
-  foto uji hanya mencapai 0.6439 — jarak dataset↔sawah sungguhan sudah terukur.
-- TalkBack belum pernah dinyalakan.
-- Aplikasi belum pernah diuji di perangkat low-end sungguhan (Android 7 / RAM 2GB).
-- Jalur kamera langsung ("Ambil foto") belum diuji; semua uji lewat galeri.
-- **Tidak ada petani sungguhan yang pernah memakai aplikasi ini.** Hipotesis inti
-  PRD — bahwa petani lebih suka berbicara daripada membaca — tetap sebuah
-  hipotesis, tidak tervalidasi.
-- Aksen daerah untuk STT belum pernah diuji; seluruh uji suara memakai satu
-  penutur.
-- Notifikasi cuaca ekstrem belum pernah terlihat di layar: memicunya menuntut
-  BMKG benar-benar meramalkan hujan ≥50 mm, dan itu tidak terjadi selama
-  pengembangan.
+Jawaban AI selalu dilandaskan pada data cuaca desa yang dipilih, bukan tebakan
+umum. Bila layanan BMKG sedang tidak bisa dihubungi, aplikasi beralih ke
+Open-Meteo sebagai cadangan.
 
-## Syarat Build
+**Cek penyakit padi**
 
-| Kebutuhan | Versi |
+```mermaid
+flowchart LR
+    A["📷 Foto daun padi"] --> B["Model AI kecil<br/>di dalam HP"]
+    B --> C{"Seberapa yakin?"}
+    C -->|"≥ 80%"| D["Dugaan penyakit"]
+    C -->|"60–79%"| E["Dugaan lemah<br/>+ peringatan"]
+    C -->|"< 60%"| F["Belum yakin —<br/>minta foto ulang"]
+```
+
+Aplikasi sengaja membedakan dugaan kuat dari dugaan lemah. Menurut data uji,
+dugaan di atas 80% hampir selalu benar, sedangkan dugaan 60–79% hanya benar
+sekitar dua dari tiga kali — jadi petani perlu tahu bedanya sebelum membeli obat.
+
+<details>
+<summary><b>Istilah yang dipakai di halaman ini</b></summary>
+
+- **APK** — berkas pemasang aplikasi Android.
+- **Offline** — bekerja tanpa koneksi internet.
+- **STT / TTS** — *speech-to-text* (suara → teks) dan *text-to-speech* (teks → suara).
+  Keduanya memakai mesin bawaan Android.
+- **Model / TFLite** — "otak" pengenal gambar yang sudah dilatih, disimpan di
+  dalam aplikasi dan dijalankan langsung oleh HP.
+- **BMKG** — Badan Meteorologi, Klimatologi, dan Geofisika, sumber prakiraan cuaca resmi.
+- **App Check** — penjaga dari Firebase yang memastikan hanya aplikasi resmi yang
+  boleh memakai layanan AI.
+
+</details>
+
+## Status proyek
+
+**Selesai sebagai proyek portfolio** (September 2026).
+
+- ✅ Aplikasi berfungsi dan sudah dipakai di perangkat Android sungguhan.
+- ✅ 308 unit test, cakupan baris kode 90,3%, dan pemeriksaan otomatis (CI) di
+  setiap perubahan.
+- ❌ **Tidak diterbitkan di Play Store** dan **belum pernah dipakai petani
+  sungguhan.** Keputusan ini disengaja: yang tersisa dari jalur rilis adalah urusan
+  akun, masa uji tertutup, dan rekrutmen lapangan — bukan lagi soal kode.
+
+## Mencoba sendiri
+
+Aplikasi ini dibangun dari kode sumber dengan Android Studio. Langkah lengkapnya
+ada di **[Panduan Pengembang](docs/DEVELOPMENT.md)**. Setelah `git clone` dan build,
+yang langsung bisa dipakai tanpa pengaturan tambahan:
+
+- ✅ **Cek penyakit padi** — berfungsi penuh dan offline.
+- ✅ Prakiraan cuaca, pemilihan desa, pemberitahuan, dan seluruh tampilan.
+- ❌ **Tanya-jawab suara** — menampilkan *"Layanan jawaban sedang tidak bisa dihubungi."*
+
+Yang terakhir bukan kerusakan. Proyek ini **tidak menyimpan kunci API di dalam
+aplikasi**, karena kunci seperti itu bisa dibongkar siapa saja. Sebagai gantinya,
+layanan AI hanya menerima permintaan dari aplikasi yang ditandatangani pemilik
+proyek. Untuk menghidupkannya di salinan Anda, buat projek Firebase sendiri —
+caranya di [Panduan Pengembang](docs/DEVELOPMENT.md#menghidupkan-fitur-ai-di-clone-anda).
+
+## Keterbatasan yang jujur
+
+Hal-hal berikut **belum terbukti** dan sengaja dicatat terbuka:
+
+- **Akurasi 86,2% diukur pada data uji, bukan di sawah.** Foto daun blas yang
+  jelas terlihat pun hanya mendapat keyakinan 64% — kondisi lapangan lebih sulit
+  daripada dataset.
+- Belum pernah diuji dengan logat daerah; semua uji suara memakai satu penutur.
+- Belum diuji di HP kelas bawah (Android 7, RAM 2 GB) maupun dengan pembaca layar TalkBack.
+- Pengambilan foto langsung dari kamera belum diuji; semua uji lewat galeri.
+- Pemberitahuan cuaca ekstrem belum pernah terlihat di layar, karena selama
+  pengembangan BMKG tidak pernah meramalkan hujan ≥50 mm.
+- Hipotesis utamanya — bahwa petani lebih suka berbicara daripada membaca —
+  belum divalidasi dengan pengguna sungguhan.
+
+## Untuk developer
+
+**Teknologi:** Kotlin · Jetpack Compose · Hilt · Room · Retrofit + OkHttp ·
+kotlinx.serialization · WorkManager · DataStore · Coil · Timber · TensorFlow Lite ·
+Firebase (AI Logic, App Check, Crashlytics)
+
+**Arsitektur:** Clean Architecture dalam satu modul `:app`, paket `com.agribicara.app`:
+
+```
+core/          common, util
+di/            modul Hilt
+data/          ai, appcheck, local{dao,entity,migration}, logging, mapper, ml,
+               notification, remote{bmkg,openmeteo,wilayah}, repository, speech, worker
+domain/        ai, ml, model, repository, usecase, weather
+presentation/  detection, home, license, navigation, onboarding, region, theme,
+               voice, weather
+```
+
+**Model penyakit padi:** MobileNetV3-Small, 10 kelas (9 penyakit dan hama padi,
+plus daun sehat), dilatih dengan dataset Paddy Doctor. Kode pelatihannya ada di
+[`ml/`](ml/).
+
+| Dokumen | Isi |
 |---|---|
-| JDK | 17 minimum. Dikembangkan dengan JBR bawaan Android Studio — per 2026-09-02 versinya **25.0.2**, bukan 21 seperti tertulis sebelumnya. CI memakai **JDK 21**, jadi keduanya memang berbeda dan itu tidak masalah selama keduanya ≥17 |
-| Android SDK Platform | API 37 (`platforms;android-37.0`) |
-| SDK Build Tools | 36.0.0+ |
-| Gradle | 9.7.1 (via wrapper — tidak perlu instalasi terpisah) |
+| [Panduan Pengembang](docs/DEVELOPMENT.md) | Syarat build, setup, perintah, test, build rilis, catatan versi |
+| [`ml/README.md`](ml/README.md) | Pelatihan dan konversi model |
+| [`docs/play/release-checklist.md`](docs/play/release-checklist.md) | Jalur rilis Play Store yang tidak ditempuh, terdokumentasi utuh |
+| [`docs/legal/privacy-policy.md`](docs/legal/privacy-policy.md) | Kebijakan privasi |
 
-Android Gradle Plugin 9.x mewajibkan JDK 17 ke atas. JDK 11 atau lebih rendah
-akan gagal total.
+## Kredit
 
-## Setup
+- **Dataset Paddy Doctor** — Petchiammal A, Briskline Kiruba S, D. Murugan,
+  Pandarasamy Arjunan. [paddydoc.github.io](https://paddydoc.github.io), lisensi
+  Apache-2.0. Atribusi lengkap di [`ml/NOTICE`](ml/NOTICE).
+- **Prakiraan cuaca** — [BMKG](https://www.bmkg.go.id), dengan
+  [Open-Meteo](https://open-meteo.com) sebagai cadangan.
+- **Daftar wilayah** — [wilayah.id](https://wilayah.id).
 
-1. Pasang Android Studio beserta Android SDK.
-2. Buat `local.properties` di root proyek yang menunjuk ke SDK Anda:
+## Lisensi
 
-   ```properties
-   sdk.dir=C\:/Users/<nama-anda>/AppData/Local/Android/Sdk
-   ```
-
-   Perhatikan tanda `\` sebelum titik dua — di file `.properties`, titik dua
-   setelah huruf drive harus di-escape (Android Lint akan menandainya jika tidak).
-
-3. `local.properties` **tidak pernah di-commit**.
-
-   Catatan koreksi: baris ini sebelumnya menyatakan `local.properties` akan
-   menampung API key Gemini mulai Fase 5. **Itu tidak pernah terjadi.** Fase 5
-   justru memakai Firebase AI Logic supaya tidak ada kunci Gemini di mana pun —
-   kunci yang ditanam di APK bisa dibaca siapa saja yang membongkarnya. Satu-satunya
-   rahasia lokal proyek ini sekarang adalah material penandatanganan rilis, dan
-   itu tinggal di `keystore.properties`, bukan di sini.
-
-4. **Daftarkan debug token App Check — wajib, sekali per perangkat uji.**
-
-   Tanpa langkah ini fitur tanya-jawab AI **mati total** di build debug: App
-   Check menolak setiap panggilan Gemini, dan layar hanya menampilkan pesan
-   kegagalan. Build tetap sukses, seluruh test tetap hijau, dan tidak ada satu
-   pun pemeriksaan otomatis yang bisa menangkapnya.
-
-   ```bash
-   adb logcat -d | grep DebugAppCheckProvider
-   ```
-
-   Salin UUID yang tercetak, lalu daftarkan di **Firebase Console → App Check →
-   aplikasi Android → ⋮ → Manage debug tokens**.
-
-   Token disimpan di `shared_prefs` aplikasi, jadi ia bertahan melewati
-   `adb install -r` tetapi **hilang bila data aplikasi dibersihkan atau
-   aplikasi di-uninstall** — saat itu terbitlah token baru yang harus
-   didaftarkan lagi. Gejalanya menipu: fitur yang kemarin bekerja tiba-tiba
-   mati tanpa ada kode yang berubah.
-
-   Sejak perbaikan 2026-09-08, build debug menyebut penyebab ini terang-terangan
-   di layar. Build rilis tidak, dan memang tidak boleh: petani tidak punya
-   Firebase Console. Rilis memakai Play Integrity yang bekerja otomatis tanpa
-   token apa pun — **petani tidak pernah mendaftarkan apa-apa.**
-
-## Perintah
-
-```bash
-./gradlew assembleDebug            # build debug
-./gradlew assembleRelease          # build rilis (R8 + resource shrinking)
-./gradlew bundleRelease            # AAB untuk Play Store
-./gradlew testDebugUnitTest        # unit test
-./gradlew koverVerifyDebug         # ambang coverage 85% baris
-./gradlew lintDebug                # analisis statis
-```
-
-`connectedDebugAndroidTest` sengaja **tidak** dicantumkan: ia gagal enam kali
-berturut-turut di mesin pengembangan proyek ini selama Fase 6, tidak satu pun
-karena kode. Jalankan instrumented test lewat skrip berikut:
-
-```bash
-./gradlew assembleDebug assembleDebugAndroidTest
-adb install -r -t app/build/outputs/apk/debug/app-debug.apk
-adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-scripts/instrumented.sh              # 92 test, 15 kelas, satu proses per kelas
-```
-
-Skrip itu menjalankan **satu kelas per proses**. Bukan kerapian: satu proses
-yang menjalankan seluruh 92 test tertahan tanpa sebab yang pernah berhasil
-ditemukan, sementara setiap subset sampai 89 test lulus. Alasan lengkap dan
-daftar hipotesis yang sudah gugur ada di kepala `scripts/instrumented.sh` —
-baca dulu sebelum mencoba menyatukannya kembali.
-
-Dua hal yang mudah menjebak:
-
-- Runner-nya **`com.agribicara.app.AgriBicaraTestRunner`**, bukan
-  `androidx.test.runner.AndroidJUnitRunner`. Memakai nama lama menghasilkan
-  `Unable to find instrumentation info`.
-- `am force-stop com.agribicara.app` **tidak cukup**. `com.agribicara.app.test`
-  adalah paket TERPISAH dan tetap hidup; sisa prosesnya menabrak run berikutnya
-  dan gejalanya menyerupai flaky. Skrip sudah mematikan keduanya.
-
-## Build Rilis
-
-1. Buat keystore dan `keystore.properties` mengikuti `keystore.properties.example`.
-2. Jalankan `./gradlew bundleRelease`.
-3. Verifikasi tanda tangannya:
-
-   ```bash
-   export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr"
-   "$JAVA_HOME/bin/keytool" -printcert -jarfile app/build/outputs/bundle/release/app-release.aab
-   ```
-
-Tanpa `keystore.properties`, `assembleRelease` dan `bundleRelease` **tetap
-berjalan** dan menghasilkan artefak unsigned. Itu disengaja: CI membangun rilis
-tanpa punya keystore sama sekali. Untuk memverifikasi APK (bukan AAB) pakai
-`apksigner`, bukan `keytool` — APK ditandatangani skema v2 dan bukan JAR
-signature, sehingga `keytool -printcert` tidak menampilkan apa pun.
-
-Aset toko dan ikon legacy dibangkitkan dengan `java tools/StoreAssets.java`.
-
-Langkah Play Console, beta test, dan hal-hal yang harus dikerjakan manusia ada di
-`docs/play/release-checklist.md` — **belum dikerjakan**.
-
-## Catatan Versi Penting
-
-- **Kotlin dan KSP sengaja tidak dipin ke versi terbaru.** AGP 9.3.0 meng-embed
-  KGP 2.2.10 dan KSP 2.2.10-2.0.2; proyek mengikuti pasangan itu karena keduanya
-  adalah kombinasi yang diuji AGP. Lint akan memberi peringatan bahwa Kotlin
-  2.4.10 dan KSP 2.3.11 tersedia — itu disengaja, jangan dinaikkan tanpa
-  memverifikasi ulang seluruh rantai AGP/KGP/KSP.
-- **AGP 9 memiliki built-in Kotlin.** Plugin `org.jetbrains.kotlin.android`
-  TIDAK dipakai (dan akan menggagalkan build jika ditambahkan). Plugin
-  `org.jetbrains.kotlin.plugin.compose` tetap diperlukan.
-- `android.disallowKotlinSourceSets=false` di `gradle.properties` diperlukan
-  karena KSP masih mendaftarkan source hasil generate lewat `kotlin.sourceSets`.
-  Tinjau ulang ketika KSP merilis versi yang sadar built-in Kotlin.
-
-## Arsitektur
-
-Clean Architecture, satu module (`:app`):
-
-```
-com.agribicara.app
-├── core/common/       NetworkResult, Constants, DispatcherProvider
-├── di/                Modul Hilt (App, Database, Network)
-├── data/local/        Room: AppDatabase, entity, DAO
-└── presentation/      theme, navigation, onboarding, home
-```
-
-Konvensi yang berlaku untuk semua fase berikutnya:
-
-- Repository mengembalikan `NetworkResult`, tidak melempar exception lintas layer.
-- Pesan error selalu Bahasa Indonesia sederhana (langsung tampil ke petani).
-- Logging lewat Timber; tanpa `Log.d`/`println`, tanpa data pribadi di rilis.
-- Satu `<Screen>UiState` per layar, di-expose sebagai `StateFlow` tunggal.
-- Tanpa nilai hardcoded: teks di `strings.xml`, ukuran di `Dimens`, sisanya di
-  `Constants`.
-
-## Aksesibilitas
-
-Target pengguna adalah petani dengan literasi digital rendah yang memakai
-aplikasi di luar ruangan. Aturan yang ditegakkan sejak Fase 1:
-
-- Teks tidak pernah di bawah 16sp (body default 18sp).
-- Semua elemen interaktif minimal 48dp.
-- Kontras tinggi; dynamic color (Material You) sengaja dimatikan karena warna
-  dari wallpaper dapat merusak rasio kontras.
+Kode sumber dirilis di bawah [Apache License 2.0](LICENSE).
